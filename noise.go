@@ -9,21 +9,25 @@ import (
 	// "fmt"
 	"io/ioutil"
 	"log"
+	"os"
 	// "net"
 )
 
 type Conf struct {
-	PortIn  int // port to receive data
-	PortOut int // port to output dara
+	InPort  int // input tcp port
+	OutPort int // output tco port
 }
 
 var conf Conf
 
 func main() {
 	var path string
-
 	flag.StringVar(&path, "c", "conf.json", "conf path")
 	flag.Parse()
+	if flag.NFlag() != 1 {
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
 
 	log.Printf("reading conf from %s..", path)
 	content, err := ioutil.ReadFile(path)
