@@ -6,6 +6,7 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"github.com/boltdb/bolt"
@@ -21,6 +22,10 @@ const (
 	COMM_PUB  = "pub"
 	COMM_SUB  = "sub"
 	DB_BUCKET = "noise"
+)
+
+var (
+	ERROR_RECV_FORMAT = errors.New("invalid input")
 )
 
 type context struct {
@@ -187,6 +192,9 @@ func (ser *server) handleSub(conn net.Conn) {
 func load(s string) (*stat, error) {
 	st := new(stat)
 	list := strings.Fields(s)
+	if len(list) != 3 {
+		return nil, ERROR_RECV_FORMAT
+	}
 	name := list[0]
 	stamp, err := strconv.Atoi(list[1])
 	if err != nil {
