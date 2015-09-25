@@ -24,6 +24,6 @@ func main() {
 		log.Fatalf("error to read %s: %v", *fileName, err)
 	}
 
-	app := NewApp(cfg)
-	app.Serve()
+	server := NewServer(cfg)
+	server.Serve()
 }

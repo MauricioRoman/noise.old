@@ -14,20 +14,20 @@ const (
 	COMM_SUB = "sub"
 )
 
-type App struct {
+type Server struct {
 	cfg *Config
 	chs map[*net.Conn]chan []byte
 }
 
-func NewApp(cfg *Config) *App {
-	app := new(App)
-	app.cfg = cfg
-	app.chs = make(map[*net.Conn]chan []byte)
-	return app
+func NewServer(cfg *Config) *Server {
+	server := new(Server)
+	server.cfg = cfg
+	server.chs = make(map[*net.Conn]chan []byte)
+	return server
 }
 
-func (app *App) Serve() {
-	addr := fmt.Sprintf("0.0.0.0:%d", app.cfg.Port)
+func (server *Server) Serve() {
+	addr := fmt.Sprintf("0.0.0.0:%d", server.cfg.Port)
 	listener, err := net.Listen("tcp", addr)
 
 	if err != nil {
@@ -41,11 +41,11 @@ func (app *App) Serve() {
 		if err != nil {
 			log.Println("error to accept new conn")
 		}
-		go app.handle(conn)
+		go server.handle(conn)
 	}
 }
 
-func (app *App) handle(conn net.Conn) {
+func (server *Server) handle(conn net.Conn) {
 	addr := conn.RemoteAddr()
 	log.Printf("conn %s established", addr)
 
@@ -65,10 +65,10 @@ func (app *App) handle(conn net.Conn) {
 		switch scanner.Text() {
 		case COMM_PUB:
 			log.Printf("conn %s action: pub", addr)
-			app.handlePub(conn)
+			server.handlePub(conn)
 		case COMM_SUB:
 			log.Printf("conn %s action: sub", addr)
-			app.handleSub(conn)
+			server.handleSub(conn)
 		default:
 			log.Printf("conn %s action: unkwn", addr)
 		}
@@ -76,7 +76,7 @@ func (app *App) handle(conn net.Conn) {
 
 }
 
-func (app *App) handlePub(conn net.Conn) {
+func (server *Server) handlePub(conn net.Conn) {
 	scanner := bufio.NewScanner(conn)
 
 	for scanner.Scan() {
@@ -86,17 +86,17 @@ func (app *App) handlePub(conn net.Conn) {
 		}
 		s := scanner.Text()
 
-		for _, ch := range app.chs {
+		for _, ch := range server.chs {
 			ch <- []byte(s)
 		}
 	}
 }
 
-func (app *App) handleSub(conn net.Conn) {
-	app.chs[&conn] = make(chan []byte)
-	defer delete(app.chs, &conn)
+func (server *Server) handleSub(conn net.Conn) {
+	server.chs[&conn] = make(chan []byte)
+	defer delete(server.chs, &conn)
 	for {
-		bytes := <-app.chs[&conn]
+		bytes := <-server.chs[&conn]
 		bytes = append(bytes, '\n')
 		_, err := conn.Write(bytes)
 		if err != nil {
