@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/boltdb/bolt"
 	"io/ioutil"
 	"log"
 	"net"
@@ -22,6 +23,7 @@ const (
 
 type context struct {
 	cfg  *config
+	db   *bolt.DB
 	outs map[*net.Conn]chan []byte
 }
 
@@ -41,19 +43,18 @@ type server struct {
 func main() {
 	fileName := flag.String("c", "config.json", "config file")
 	flag.Parse()
-
 	if flag.NFlag() != 1 && flag.NArg() > 0 {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
-
 	cfg, err := newConfig(*fileName)
-
 	if err != nil {
 		log.Fatalf("error to read %s: %v", *fileName, err)
 	}
-
-	ctx := newContext(cfg)
+	ctx, err := newContext(cfg)
+	if err != nil {
+		log.Fatalf("error to open db %s: %v", cfg.DBFile, err)
+	}
 	ser := newServer(ctx)
 	ser.serve()
 }
@@ -78,11 +79,16 @@ func newConfig(fileName string) (*config, error) {
 	return cfg, nil
 }
 
-func newContext(cfg *config) *context {
+func newContext(cfg *config) (*context, error) {
 	ctx := new(context)
 	ctx.cfg = cfg
 	ctx.outs = make(map[*net.Conn]chan []byte)
-	return ctx
+	db, err := bolt.Open(cfg.DBFile, 0600, nil)
+	if err != nil {
+		return nil, err
+	}
+	ctx.db = db
+	return ctx, nil
 }
 
 func newServer(ctx *context) *server {
