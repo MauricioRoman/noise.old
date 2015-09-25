@@ -15,19 +15,17 @@ const (
 )
 
 type Server struct {
-	cfg *Config
-	chs map[*net.Conn]chan []byte
+	ctx *Context
 }
 
-func NewServer(cfg *Config) *Server {
+func NewServer(ctx *Context) *Server {
 	server := new(Server)
-	server.cfg = cfg
-	server.chs = make(map[*net.Conn]chan []byte)
+	server.ctx = ctx
 	return server
 }
 
 func (server *Server) Serve() {
-	addr := fmt.Sprintf("0.0.0.0:%d", server.cfg.Port)
+	addr := fmt.Sprintf("0.0.0.0:%d", server.ctx.cfg.Port)
 	listener, err := net.Listen("tcp", addr)
 
 	if err != nil {
@@ -86,17 +84,17 @@ func (server *Server) handlePub(conn net.Conn) {
 		}
 		s := scanner.Text()
 
-		for _, ch := range server.chs {
+		for _, ch := range server.ctx.chans {
 			ch <- []byte(s)
 		}
 	}
 }
 
 func (server *Server) handleSub(conn net.Conn) {
-	server.chs[&conn] = make(chan []byte)
-	defer delete(server.chs, &conn)
+	server.ctx.chans[&conn] = make(chan []byte)
+	defer delete(server.ctx.chans, &conn)
 	for {
-		bytes := <-server.chs[&conn]
+		bytes := <-server.ctx.chans[&conn]
 		bytes = append(bytes, '\n')
 		_, err := conn.Write(bytes)
 		if err != nil {
