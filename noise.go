@@ -63,11 +63,11 @@ func main() {
 	}
 	cfg, err := newConfig(*fileName)
 	if err != nil {
-		log.Fatalf("error to read %s: %v", *fileName, err)
+		log.Fatalf("failed to read %s: %v", *fileName, err)
 	}
 	ctx, err := newContext(cfg)
 	if err != nil {
-		log.Fatalf("error to open db %s: %v", cfg.DBFile, err)
+		log.Fatalf("failed to open db %s: %v", cfg.DBFile, err)
 	}
 	ser := newServer(ctx)
 	ser.serve()
@@ -114,17 +114,14 @@ func newServer(ctx *context) *server {
 func (ser *server) serve() {
 	addr := fmt.Sprintf("0.0.0.0:%d", ser.ctx.cfg.Port)
 	listener, err := net.Listen("tcp", addr)
-
 	if err != nil {
-		log.Fatalf("error to bind %s", addr)
+		log.Fatalf("failed to bind %s", addr)
 	}
-
 	log.Printf("listening on %s..", addr)
-
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			log.Println("error to accept new conn")
+			log.Println("failed to accept new conn")
 		}
 		go ser.handle(conn)
 	}
@@ -140,7 +137,7 @@ func (ser *server) handle(conn net.Conn) {
 	scanner := bufio.NewScanner(conn)
 	if scanner.Scan() {
 		if err := scanner.Err(); err != nil {
-			log.Printf("error recv: %v, closing conn..", err)
+			log.Printf("failed to read data: %v, closing conn..", err)
 			return
 		}
 		switch scanner.Text() {
@@ -160,11 +157,11 @@ func (ser *server) handlePub(conn net.Conn) {
 	scanner := bufio.NewScanner(conn)
 	for scanner.Scan() {
 		if err := scanner.Err(); err != nil {
-			log.Printf("error recv: %v, closing conn..", err)
+			log.Printf("failed to read data: %v, closing conn..", err)
 			break
 		}
 		s := scanner.Text()
-		st, err := load(s)
+		st, err := loadStat(s)
 		if err != nil {
 			log.Printf("invalid input: %s", s)
 			continue
@@ -180,7 +177,7 @@ func (ser *server) handleSub(conn net.Conn) {
 	defer delete(ser.ctx.outs, &conn)
 	for {
 		st := <-ser.ctx.outs[&conn]
-		bytes := []byte(dump(st))
+		bytes := []byte(dumpStat(st))
 		bytes = append(bytes, '\n')
 		_, err := conn.Write(bytes)
 		if err != nil {
@@ -189,7 +186,7 @@ func (ser *server) handleSub(conn net.Conn) {
 	}
 }
 
-func load(s string) (*stat, error) {
+func loadStat(s string) (*stat, error) {
 	st := new(stat)
 	list := strings.Fields(s)
 	if len(list) != 3 {
@@ -211,6 +208,19 @@ func load(s string) (*stat, error) {
 	return st, nil
 }
 
-func dump(st *stat) string {
+func dumpStat(st *stat) string {
 	return fmt.Sprintf("%s %d %.3f %.3f", st.name, st.stamp, st.value, st.multi)
+}
+
+func analyze(ctx *context, st *stat) (result bool) {
+	ctx.db.Batch(func(tx *bolt.Tx) error {
+		b, err := tx.CreateBucketIfNotExists([]byte(DB_BUCKET))
+		if err != nil {
+			log.Fatal("failed to create bucket %s in db")
+			return err
+		}
+		log.Printf("%s", b.Get([]byte(st.name)))
+		return nil
+	})
+	return
 }
