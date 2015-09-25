@@ -13,6 +13,8 @@ import (
 	"log"
 	"net"
 	"os"
+	"strconv"
+	"strings"
 )
 
 const (
@@ -24,7 +26,7 @@ const (
 type context struct {
 	cfg  *config
 	db   *bolt.DB
-	outs map[*net.Conn]chan []byte
+	outs map[*net.Conn]chan *stat
 }
 
 type config struct {
@@ -38,6 +40,13 @@ type config struct {
 
 type server struct {
 	ctx *context
+}
+
+type stat struct {
+	name  string
+	stamp int
+	value float32
+	multi float32
 }
 
 func main() {
@@ -82,7 +91,7 @@ func newConfig(fileName string) (*config, error) {
 func newContext(cfg *config) (*context, error) {
 	ctx := new(context)
 	ctx.cfg = cfg
-	ctx.outs = make(map[*net.Conn]chan []byte)
+	ctx.outs = make(map[*net.Conn]chan *stat)
 	db, err := bolt.Open(cfg.DBFile, 0600, nil)
 	if err != nil {
 		return nil, err
@@ -150,21 +159,50 @@ func (ser *server) handlePub(conn net.Conn) {
 			break
 		}
 		s := scanner.Text()
+		st, err := load(s)
+		if err != nil {
+			log.Printf("invalid input: %s", s)
+			continue
+		}
 		for _, out := range ser.ctx.outs {
-			out <- []byte(s)
+			out <- st
 		}
 	}
 }
 
 func (ser *server) handleSub(conn net.Conn) {
-	ser.ctx.outs[&conn] = make(chan []byte)
+	ser.ctx.outs[&conn] = make(chan *stat)
 	defer delete(ser.ctx.outs, &conn)
 	for {
-		bytes := <-ser.ctx.outs[&conn]
+		st := <-ser.ctx.outs[&conn]
+		bytes := []byte(dump(st))
 		bytes = append(bytes, '\n')
 		_, err := conn.Write(bytes)
 		if err != nil {
 			break
 		}
 	}
+}
+
+func load(s string) (*stat, error) {
+	st := new(stat)
+	list := strings.Fields(s)
+	name := list[0]
+	stamp, err := strconv.Atoi(list[1])
+	if err != nil {
+		return nil, err
+	}
+	value, err := strconv.ParseFloat(list[2], 32)
+	if err != nil {
+		return nil, err
+	}
+	st.name = name
+	st.stamp = stamp
+	st.value = float32(value)
+	st.multi = 0
+	return st, nil
+}
+
+func dump(st *stat) string {
+	return fmt.Sprintf("%s %d %.3f %.3f", st.name, st.stamp, st.value, st.multi)
 }
