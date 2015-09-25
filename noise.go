@@ -4,39 +4,26 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
-	// "fmt"
-	"io/ioutil"
 	"log"
 	"os"
-	// "net"
 )
 
-type Conf struct {
-	InPort  int // input tcp port
-	OutPort int // output tco port
-}
-
-var conf Conf
-
 func main() {
-	var path string
-	flag.StringVar(&path, "c", "conf.json", "conf path")
+	fileName := flag.String("c", "config.json", "config file")
 	flag.Parse()
-	if flag.NFlag() != 1 {
+
+	if flag.NFlag() != 1 && flag.NArg() > 0 {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
 
-	log.Printf("reading conf from %s..", path)
-	content, err := ioutil.ReadFile(path)
+	cfg, err := NewConfigWithFile(*fileName)
+
 	if err != nil {
-		log.Fatalf("failed to read %s: %v", path, err)
+		log.Fatalf("failed to read %s: %v", *fileName, err)
 	}
 
-	err = json.Unmarshal(content, &conf)
-	if err != nil {
-		log.Fatalf("failed to parse conf: %v", err)
-	}
+	app := NewApp(cfg)
+	app.Serve()
 }

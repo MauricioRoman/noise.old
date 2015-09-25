@@ -1,0 +1,8 @@
+{
+  "port": 9000,
+  "workers": 1,
+  "dbfile": "noise.db",
+  "fatcor": 0.06,
+  "strict": true,
+  "periodicity": 86400
+}
