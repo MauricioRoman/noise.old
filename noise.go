@@ -21,7 +21,7 @@ func main() {
 	cfg, err := NewConfigWithFile(*fileName)
 
 	if err != nil {
-		log.Fatalf("failed to read %s: %v", *fileName, err)
+		log.Fatalf("error to read %s: %v", *fileName, err)
 	}
 
 	app := NewApp(cfg)
