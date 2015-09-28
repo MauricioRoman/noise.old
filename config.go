@@ -7,13 +7,15 @@ import (
 )
 
 type Config struct {
-	Port        int     `json:"port"`
-	Workers     int     `json:"workers"`
-	DBPath      string  `json:"dbpath"`
-	Factor      float64 `json:"factor"`
-	Strict      bool    `json:"strict"`
-	Periodicity int     `json:"periodicity"`
-	StartSize   int     `json:"start size"`
+	Port        int      `json:"port"`
+	Workers     int      `json:"workers"`
+	DBPath      string   `json:"dbpath"`
+	Factor      float64  `json:"factor"`
+	Strict      bool     `json:"strict"`
+	Periodicity int      `json:"periodicity"`
+	StartSize   int      `json:"start size"`
+	WhiteList   []string `json: "whitelist"`
+	BlackList   []string `json: "blacklist"`
 }
 
 // Create config with default values
@@ -26,6 +28,8 @@ func NewConfigWithDefaults() *Config {
 	cfg.Strict = true
 	cfg.Periodicity = 24 * 3600
 	cfg.StartSize = 50
+	cfg.WhiteList = []string{"*"}
+	cfg.BlackList = []string{"statsd.*"}
 	return cfg
 }
 

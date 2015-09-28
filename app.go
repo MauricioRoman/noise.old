@@ -7,6 +7,7 @@ import (
 	"log"
 	"math"
 	"net"
+	"path/filepath"
 	"strings"
 )
 
@@ -67,13 +68,13 @@ func (app *App) Handle(conn net.Conn) {
 		s := scanner.Text()
 		switch strings.ToLower(s) {
 		case ACTION_PUB:
-			log.Printf("conn %s action: pub", addr)
+			log.Printf("action pub from conn %s", addr)
 			app.HandlePub(conn)
 		case ACTION_SUB:
-			log.Printf("conn %s action: sub", addr)
+			log.Printf("action sub from conn %s", addr)
 			app.HandleSub(conn)
 		default:
-			log.Printf("conn %s action: unkwn", addr)
+			log.Printf("unkown action from conn %s", addr)
 		}
 	}
 }
@@ -93,6 +94,12 @@ func (app *App) HandlePub(conn net.Conn) {
 			log.Printf("invalid input, skipping..")
 			continue
 		}
+
+		if !app.Match(stat) {
+			log.Println("not match")
+			continue
+		}
+
 		err = app.Detect(stat)
 		if err != nil {
 			log.Printf("failed to detect %s: %v, skipping..", stat.Name, err)
@@ -120,6 +127,35 @@ func (app *App) HandleSub(conn net.Conn) {
 			break
 		}
 	}
+}
+
+// Match the whitelist and blacklist.
+func (app *App) Match(stat *Stat) bool {
+	wl := app.cfg.WhiteList
+	bl := app.cfg.BlackList
+	for i := 0; i < len(wl); i++ {
+		matched, err := filepath.Match(wl[i], stat.Name)
+		if err != nil {
+			log.Printf("!bad whitelist pattern: %s, %v, skipping..",
+				wl[i], err)
+			continue
+		}
+		if matched {
+			for j := 0; j < len(bl); j++ {
+				matched, err := filepath.Match(bl[j], stat.Name)
+				if err != nil {
+					log.Printf("!bad blacklist pattern: %s, %v, skipping..",
+						bl[j], err)
+					continue
+				}
+				if matched {
+					return false
+				}
+			}
+			return true
+		}
+	}
+	return false
 }
 
 // Detect anomaly
@@ -153,7 +189,6 @@ func (app *App) Detect(stat *Stat) error {
 			anoma = (val - avgNew) / float64(3*stdNew)
 		}
 	}
-
 	dataNew := []byte(fmt.Sprintf("%.5f %.5f %d", avgNew, stdNew, numNew))
 	err = app.db.Put([]byte(key), dataNew, nil)
 	if err != nil {
