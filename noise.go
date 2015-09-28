@@ -323,6 +323,9 @@ func (app *App) Detect(stat *Stat) error {
 		if err != nil || n != 3 {
 			return ErrInvalidDBVal
 		}
+		if !app.cfg.Strict {
+			val = (val + avgOld) / float64(2)
+		}
 		avgNew = (1-fct)*avgOld + fct*val
 		stdNew = math.Sqrt((1-fct)*stdOld*stdOld + fct*(val-avgOld)*(val-avgNew))
 		if numOld < app.cfg.StartSize {
