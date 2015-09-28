@@ -61,15 +61,15 @@ type Stat struct {
 
 // Main entry.
 func main() {
-	fileName := flag.String("c", "config.json", "config file")
 	flag.Parse()
-	if flag.NFlag() != 1 && flag.NArg() > 0 {
-		flag.PrintDefaults()
+	if flag.NArg() != 1 {
+		fmt.Fprintln(os.Stderr, "help: noise <path/to/config.json>")
 		os.Exit(1)
 	}
-	cfg, err := NewConfigWithJSONFile(*fileName)
+	fileName := flag.Args()[0]
+	cfg, err := NewConfigWithJSONFile(fileName)
 	if err != nil {
-		log.Fatalf("failed to read %s: %v", *fileName, err)
+		log.Fatalf("failed to open %s: %v", fileName, err)
 	}
 	app := NewApp(cfg)
 	app.Start()
@@ -92,7 +92,7 @@ func NewStat(name string, stamp int, value float64) *Stat {
 	return stat
 }
 
-// Create stat with string.
+// Create stat with protocol like string.
 func NewStatWithString(s string) (*Stat, error) {
 	words := strings.Fields(s)
 	if len(words) != 3 {
@@ -110,13 +110,13 @@ func NewStatWithString(s string) (*Stat, error) {
 	return NewStat(name, stamp, value), nil
 }
 
-// Dump stat into string
+// Dump or format stat into string.
 func (stat *Stat) String() string {
 	return fmt.Sprintf("%s %d %.3f %.3f",
 		stat.Name, stat.Stamp, stat.Value, stat.Anoma)
 }
 
-// Create config with default values
+// Create config with default values.
 func NewConfigWithDefaults() *Config {
 	cfg := new(Config)
 	cfg.Port = 9000
@@ -154,7 +154,7 @@ func NewConfigWithJSONFile(fileName string) (*Config, error) {
 	return NewConfigWithJSONBytes(data)
 }
 
-// Create app by config.
+// Create an app instance by config.
 func NewApp(cfg *Config) *App {
 	db, err := leveldb.OpenFile(cfg.DBPath, nil)
 	if err != nil {
@@ -167,7 +167,7 @@ func NewApp(cfg *Config) *App {
 	return app
 }
 
-// Start server.
+// Start app server.
 func (app *App) Start() {
 	addr := fmt.Sprintf("0.0.0.0:%d", app.cfg.Port)
 	ln, err := net.Listen("tcp", addr)
@@ -205,13 +205,13 @@ func (app *App) Handle(conn net.Conn) {
 		s := scanner.Text()
 		switch strings.ToLower(s) {
 		case ACTION_PUB:
-			log.Printf("action pub from conn %s", addr)
+			log.Printf("conn %s action pub", addr)
 			app.HandlePub(conn)
 		case ACTION_SUB:
-			log.Printf("action sub from conn %s", addr)
+			log.Printf("conn %s action sub", addr)
 			app.HandleSub(conn)
 		default:
-			log.Printf("action unknown from conn %s", addr)
+			log.Printf("conn %s action unknown", addr)
 		}
 	}
 }
