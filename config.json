@@ -2,7 +2,7 @@
   "port": 9000,
   "workers": 1,
   "dbpath": "noise.db",
-  "fatcor": 0.06,
+  "factor": 0.06,
   "strict": true,
   "periodicity": 86400
 }
