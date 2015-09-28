@@ -122,7 +122,7 @@ func NewConfigWithDefaults() *Config {
 	cfg.Factor = 0.06
 	cfg.Strict = true
 	cfg.Periodicity = 24 * 3600
-	cfg.StartSize = 50
+	cfg.StartSize = 23
 	cfg.WhiteList = []string{"*"}
 	cfg.BlackList = []string{"statsd.*"}
 	return cfg
