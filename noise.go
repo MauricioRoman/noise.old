@@ -20,6 +20,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/syndtr/goleveldb/leveldb"
 )
@@ -251,17 +252,19 @@ func (app *App) HandlePub(conn net.Conn) {
 		if !app.Match(stat) {
 			continue
 		}
+		startAt := time.Now()
 		err = app.Detect(stat)
 		if err != nil {
 			log.Printf("failed to detect %s: %v, skipping..", stat.Name, err)
 			continue
 		}
+		elapsed := time.Since(startAt)
+		log.Printf("(%dms) detected => %s", elapsed.Nanoseconds()/1E6, stat.String())
 		for _, out := range app.outs {
 			if math.Abs(stat.Anoma) >= 1.0 {
 				out <- stat
 			}
 		}
-		log.Printf("detected => %s", stat.String())
 	}
 }
 
