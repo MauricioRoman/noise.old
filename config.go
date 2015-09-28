@@ -9,8 +9,8 @@ import (
 type Config struct {
 	Port        int     `json:"port"`
 	Workers     int     `json:"workers"`
-	DBFile      string  `json:"dbfile"`
-	Factor      float32 `json:"factor"`
+	DBPath      string  `json:"dbpath"`
+	Factor      float64 `json:"factor"`
 	Strict      bool    `json:"strict"`
 	Periodicity int     `json:"periodicity"`
 }
@@ -20,7 +20,7 @@ func NewConfigWithDefaults() *Config {
 	cfg := new(Config)
 	cfg.Port = 9000
 	cfg.Workers = 1
-	cfg.DBFile = "noise.db"
+	cfg.DBPath = "noise.db"
 	cfg.Factor = 0.06
 	cfg.Strict = true
 	cfg.Periodicity = 24 * 3600

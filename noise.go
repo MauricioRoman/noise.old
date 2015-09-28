@@ -13,12 +13,10 @@ func main() {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
-
 	cfg, err := NewConfigWithJSONFile(*fileName)
 	if err != nil {
 		log.Fatalf("failed to read %s: %v", err)
 	}
-
 	app := NewApp(cfg)
 	app.Start()
 }
