@@ -34,6 +34,9 @@ func NewConfigWithJSONBytes(data []byte) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
+	if cfg.Factor >= 1.0 || cfg.Factor <= 0 {
+		return nil, ErrInvalidCfgFactor
+	}
 	return cfg, nil
 }
 

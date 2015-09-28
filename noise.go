@@ -15,7 +15,7 @@ func main() {
 	}
 	cfg, err := NewConfigWithJSONFile(*fileName)
 	if err != nil {
-		log.Fatalf("failed to read %s: %v", err)
+		log.Fatalf("failed to read %s: %v", *fileName, err)
 	}
 	app := NewApp(cfg)
 	app.Start()
