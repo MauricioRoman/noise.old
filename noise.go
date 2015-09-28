@@ -59,7 +59,7 @@ type Stat struct {
 	Anoma float64 // stat anomalous factor, e.g. 1.2 (abs>=1 => anomaly)
 }
 
-// Main entry.
+// Program main entry.
 func main() {
 	flag.Parse()
 	if flag.NArg() != 1 {
@@ -92,7 +92,9 @@ func NewStat(name string, stamp int, value float64) *Stat {
 	return stat
 }
 
-// Create stat with protocol like string.
+// Create stat with protocol like string, for example input and output:
+// "foo 1443456823 4.32" => Stat{"foo", 1443456823, 4.32}. Possible errors
+// are from strconv and self-defined `ErrInvalidInput` (parsing error).
 func NewStatWithString(s string) (*Stat, error) {
 	words := strings.Fields(s)
 	if len(words) != 3 {
@@ -131,7 +133,8 @@ func NewConfigWithDefaults() *Config {
 	return cfg
 }
 
-// Create config from json bytes.
+// Create config from json bytes. Possible errors are from
+// `json.Unmarshal` and self-defined `ErrInvalidCfgFactor`.
 func NewConfigWithJSONBytes(data []byte) (*Config, error) {
 	cfg := NewConfigWithDefaults()
 	err := json.Unmarshal(data, cfg)
@@ -144,7 +147,8 @@ func NewConfigWithJSONBytes(data []byte) (*Config, error) {
 	return cfg, nil
 }
 
-// Create config from json file.
+// Create config from json file. Possible errors are from
+// `ioutil.ReadFile` and self-defined `ErrInvalidCfgFactor.`
 func NewConfigWithJSONFile(fileName string) (*Config, error) {
 	log.Printf("reading config from %s..", fileName)
 	data, err := ioutil.ReadFile(fileName)
@@ -154,7 +158,8 @@ func NewConfigWithJSONFile(fileName string) (*Config, error) {
 	return NewConfigWithJSONBytes(data)
 }
 
-// Create an app instance by config.
+// Create an app instance by config. It will try to open
+// leveldb at first and exit the process on failure.
 func NewApp(cfg *Config) *App {
 	db, err := leveldb.OpenFile(cfg.DBPath, nil)
 	if err != nil {
@@ -167,7 +172,8 @@ func NewApp(cfg *Config) *App {
 	return app
 }
 
-// Start app server.
+// Bind tcp server and start the loop to accept new
+// connections, will exit the process on failure.
 func (app *App) Start() {
 	addr := fmt.Sprintf("0.0.0.0:%d", app.cfg.Port)
 	ln, err := net.Listen("tcp", addr)
@@ -185,7 +191,9 @@ func (app *App) Start() {
 	}
 }
 
-// Handle connection request
+// Handle requests for a connection just accepted. It will
+// wait for action command "pub" and "sub", and go to the
+// corresponding loop. Any requests error will be skipped.
 func (app *App) Handle(conn net.Conn) {
 	addr := conn.RemoteAddr()
 	log.Printf("conn %s established", addr)
@@ -216,10 +224,12 @@ func (app *App) Handle(conn net.Conn) {
 	}
 }
 
-// Handle connection request for pub
+// Handle connection requests for action pub. It will start a
+// forever loop to scan (sometimes wait for) input lines, parse
+// into stats, test them with patterns in white/blacklist, then
+// do the core detection.
 func (app *App) HandlePub(conn net.Conn) {
 	scanner := bufio.NewScanner(conn)
-
 	for scanner.Scan() {
 		if err := scanner.Err(); err != nil {
 			log.Printf("failed to read data: %v, closing conn..", err)
@@ -231,12 +241,9 @@ func (app *App) HandlePub(conn net.Conn) {
 			log.Printf("invalid input, skipping..")
 			continue
 		}
-
 		if !app.Match(stat) {
-			log.Println("not match")
 			continue
 		}
-
 		err = app.Detect(stat)
 		if err != nil {
 			log.Printf("failed to detect %s: %v, skipping..", stat.Name, err)
@@ -247,10 +254,12 @@ func (app *App) HandlePub(conn net.Conn) {
 				out <- stat
 			}
 		}
+		log.Printf("detected => %s", stat.String())
 	}
 }
 
-// Handle connection request for sub
+// Handle connection request for action sub. It will dispatch anomalies
+// to each subscribers once anomaly signal fired.
 func (app *App) HandleSub(conn net.Conn) {
 	app.outs[&conn] = make(chan *Stat)
 	defer delete(app.outs, &conn)
@@ -266,29 +275,32 @@ func (app *App) HandleSub(conn net.Conn) {
 	}
 }
 
-// Match the whitelist and blacklist.
+// Match the whitelist and blacklist. A stat can pass this test only
+// if it matches at least one of patterns in whitelist, and the same
+// time it dosen't match any patterns in blacklist.
 func (app *App) Match(stat *Stat) bool {
 	wl := app.cfg.WhiteList
 	bl := app.cfg.BlackList
+	for i := 0; i < len(bl); i++ {
+		matched, err := filepath.Match(bl[i], stat.Name)
+		if err != nil {
+			log.Printf("invalid pattern in blacklist: %s, %v, skipping..",
+				bl[i], err)
+			continue
+		}
+		if matched {
+			return false
+		}
+	}
+
 	for i := 0; i < len(wl); i++ {
 		matched, err := filepath.Match(wl[i], stat.Name)
 		if err != nil {
-			log.Printf("!bad whitelist pattern: %s, %v, skipping..",
+			log.Printf("bad pattern in whitelist: %s, %v, skipping..",
 				wl[i], err)
 			continue
 		}
 		if matched {
-			for j := 0; j < len(bl); j++ {
-				matched, err := filepath.Match(bl[j], stat.Name)
-				if err != nil {
-					log.Printf("!bad blacklist pattern: %s, %v, skipping..",
-						bl[j], err)
-					continue
-				}
-				if matched {
-					return false
-				}
-			}
 			return true
 		}
 	}
