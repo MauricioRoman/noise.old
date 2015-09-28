@@ -321,6 +321,9 @@ func (app *App) Match(stat *Stat) bool {
 //
 //	avg = avg * (1-f) + f*x
 //	std = sqrt((1-f)*std*std + f*(x-avgPrev)*(x-avg))
+//
+// The only one possible error may be returned is ErrInvalidDBVal, when
+// the db data is not performed belongs to us.
 func (app *App) Detect(stat *Stat) error {
 	key := app.getDBKey(stat) // leveldb key
 	val := stat.Value         // stat value
