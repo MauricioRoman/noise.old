@@ -21,8 +21,8 @@ import (
 )
 
 const (
-	ACTION_PUB = "pub"
-	ACTION_SUB = "sub"
+	ACTION_PUB = "pub" // detail command of action pub
+	ACTION_SUB = "sub" // detail command of action sub
 )
 
 var (
@@ -32,31 +32,31 @@ var (
 )
 
 type Config struct {
-	Port        int      `json:"port"`
-	Workers     int      `json:"workers"`
-	DBPath      string   `json:"dbpath"`
-	Factor      float64  `json:"factor"`
-	Strict      bool     `json:"strict"`
-	Periodicity [2]int   `json:"periodicity"`
-	StartSize   int      `json:"start size"`
-	WhiteList   []string `json: "whitelist"`
-	BlackList   []string `json: "blacklist"`
+	Port        int      `json:"port"`        // port to bind
+	Workers     int      `json:"workers"`     // number of workers to start
+	DBPath      string   `json:"dbpath"`      // leveldb dir path
+	Factor      float64  `json:"factor"`      // weighted moving average factor
+	Strict      bool     `json:"strict"`      // if weaken latest stat value
+	Periodicity [2]int   `json:"periodicity"` // metric periodicity: grid * numGrid
+	StartSize   int      `json:"start size"`  // start detecting minimum stats count
+	WhiteList   []string `json: "whitelist"`  // allow passing pattern list
+	BlackList   []string `json: "blacklist"`  // disallow passing pattern list
 }
 
 type App struct {
-	cfg  *Config                  // app config
-	db   *leveldb.DB              // leveldb handle
+	cfg  *Config                  // ref of app config
+	db   *leveldb.DB              // ref of leveldb handle
 	outs map[*net.Conn]chan *Stat // output channels map
 }
 
 type Stat struct {
-	Name  string  // metric name
+	Name  string  // stat name
 	Stamp int     // stat timestamp
 	Value float64 // stat value
 	Anoma float64 // stat anomalous factor
 }
 
-// Main
+// Main entry.
 func main() {
 	fileName := flag.String("c", "config.json", "config file")
 	flag.Parse()
@@ -72,7 +72,7 @@ func main() {
 	app.Start()
 }
 
-// Create stat with default values
+// Create stat with default values.
 func NewStatWithDefaults() *Stat {
 	stat := new(Stat)
 	stat.Stamp = 0
@@ -80,7 +80,7 @@ func NewStatWithDefaults() *Stat {
 	return stat
 }
 
-// Create stat with arguments
+// Create stat with arguments.
 func NewStat(name string, stamp int, value float64) *Stat {
 	stat := NewStatWithDefaults()
 	stat.Name = name
