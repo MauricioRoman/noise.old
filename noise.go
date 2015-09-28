@@ -1,5 +1,7 @@
-// Copyright (c) Chao Wang <hit9@icloud.com>
-// Noise - Stats anomalies detection.
+// Copyright (c) 2015, Chao Wang <hit9@icloud.com>
+// All rights reserved.
+//
+// Noise is a simple daemon to detect anomalous stats.
 
 package main
 
@@ -9,7 +11,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/syndtr/goleveldb/leveldb"
 	"io/ioutil"
 	"log"
 	"math"
@@ -18,6 +19,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/syndtr/goleveldb/leveldb"
 )
 
 const (
@@ -50,10 +53,10 @@ type App struct {
 }
 
 type Stat struct {
-	Name  string  // stat name
-	Stamp int     // stat timestamp
-	Value float64 // stat value
-	Anoma float64 // stat anomalous factor
+	Name  string  // stat name, e.g. timer.count_ps.api
+	Stamp int     // stat timestamp, in second e.g. 1412762335
+	Value float64 // stat value, in float, e.g. 14.3
+	Anoma float64 // stat anomalous factor, e.g. 1.2 (abs>=1 => anomaly)
 }
 
 // Main entry.
@@ -292,17 +295,9 @@ func (app *App) Match(stat *Stat) bool {
 	return false
 }
 
-func (app *App) GetKey(stat *Stat) string {
-	offset := app.cfg.Periodicity[0]
-	nOffset := app.cfg.Periodicity[1]
-	periodicity := offset * nOffset
-	suffix := (stat.Stamp % periodicity) / offset
-	return fmt.Sprintf("%s-%d", stat.Name, suffix)
-}
-
-// Detect anomaly
+// Detect if this stat is an anomaly
 func (app *App) Detect(stat *Stat) error {
-	key := app.GetKey(stat)
+	key := app.getDBKey(stat)
 	val := stat.Value
 	fct := app.cfg.Factor
 
@@ -343,4 +338,16 @@ func (app *App) Detect(stat *Stat) error {
 	}
 	stat.Anoma = anoma
 	return nil
+}
+
+// Get leveldb key by stat name and timestamp, per periodicity is divided
+// into multiple grids, with each grid shares the same time span, this
+// function will find the grid for this stat by its stamp. By this way,
+// only the stats on the same phase will be considered.
+func (app *App) getDBKey(stat *Stat) string {
+	grid := app.cfg.Periodicity[0]
+	numGrids := app.cfg.Periodicity[1]
+	periodicity := grid * numGrids
+	gridNo := (stat.Stamp % periodicity) / grid
+	return fmt.Sprintf("%s:%d", stat.Name, gridNo)
 }
