@@ -2,19 +2,150 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
+	"errors"
+	"flag"
 	"fmt"
 	"github.com/syndtr/goleveldb/leveldb"
+	"io/ioutil"
 	"log"
 	"math"
 	"net"
+	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
+
+const (
+	ACTION_PUB = "pub"
+	ACTION_SUB = "sub"
+)
+
+var (
+	ErrInvalidInput     = errors.New("invalid input from pub end")
+	ErrInvalidDBVal     = errors.New("invalid value is found in db")
+	ErrInvalidCfgFactor = errors.New("invalid factor in config (require 0~1)")
+)
+
+type Config struct {
+	Port        int      `json:"port"`
+	Workers     int      `json:"workers"`
+	DBPath      string   `json:"dbpath"`
+	Factor      float64  `json:"factor"`
+	Strict      bool     `json:"strict"`
+	Periodicity int      `json:"periodicity"`
+	StartSize   int      `json:"start size"`
+	WhiteList   []string `json: "whitelist"`
+	BlackList   []string `json: "blacklist"`
+}
 
 type App struct {
 	cfg  *Config                  // app config
 	db   *leveldb.DB              // leveldb handle
 	outs map[*net.Conn]chan *Stat // output channels map
+}
+
+type Stat struct {
+	Name  string  // metric name
+	Stamp int     // stat timestamp
+	Value float64 // stat value
+	Anoma float64 // stat anomalous factor
+}
+
+// Main
+func main() {
+	fileName := flag.String("c", "config.json", "config file")
+	flag.Parse()
+	if flag.NFlag() != 1 && flag.NArg() > 0 {
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
+	cfg, err := NewConfigWithJSONFile(*fileName)
+	if err != nil {
+		log.Fatalf("failed to read %s: %v", *fileName, err)
+	}
+	app := NewApp(cfg)
+	app.Start()
+}
+
+// Create stat with default values
+func NewStatWithDefaults() *Stat {
+	stat := new(Stat)
+	stat.Stamp = 0
+	stat.Anoma = 0
+	return stat
+}
+
+// Create stat with arguments
+func NewStat(name string, stamp int, value float64) *Stat {
+	stat := NewStatWithDefaults()
+	stat.Name = name
+	stat.Stamp = stamp
+	stat.Value = value
+	return stat
+}
+
+// Create stat with string.
+func NewStatWithString(s string) (*Stat, error) {
+	words := strings.Fields(s)
+	if len(words) != 3 {
+		return nil, ErrInvalidInput
+	}
+	name := words[0]
+	stamp, err := strconv.Atoi(words[1])
+	if err != nil {
+		return nil, err
+	}
+	value, err := strconv.ParseFloat(words[2], 32)
+	if err != nil {
+		return nil, err
+	}
+	return NewStat(name, stamp, value), nil
+}
+
+// Dump stat into string
+func (stat *Stat) String() string {
+	return fmt.Sprintf("%s %d %.3f %.3f",
+		stat.Name, stat.Stamp, stat.Value, stat.Anoma)
+}
+
+// Create config with default values
+func NewConfigWithDefaults() *Config {
+	cfg := new(Config)
+	cfg.Port = 9000
+	cfg.Workers = 1
+	cfg.DBPath = "noise.db"
+	cfg.Factor = 0.06
+	cfg.Strict = true
+	cfg.Periodicity = 24 * 3600
+	cfg.StartSize = 50
+	cfg.WhiteList = []string{"*"}
+	cfg.BlackList = []string{"statsd.*"}
+	return cfg
+}
+
+// Create config from json bytes.
+func NewConfigWithJSONBytes(data []byte) (*Config, error) {
+	cfg := NewConfigWithDefaults()
+	err := json.Unmarshal(data, cfg)
+	if err != nil {
+		return nil, err
+	}
+	if cfg.Factor >= 1.0 || cfg.Factor <= 0 {
+		return nil, ErrInvalidCfgFactor
+	}
+	return cfg, nil
+}
+
+// Create config from json file.
+func NewConfigWithJSONFile(fileName string) (*Config, error) {
+	log.Printf("reading config from %s..", fileName)
+	data, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		return nil, err
+	}
+	return NewConfigWithJSONBytes(data)
 }
 
 // Create app by config.
