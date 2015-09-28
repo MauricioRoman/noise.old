@@ -15,7 +15,7 @@ type Stat struct {
 
 // Create stat with default values
 func NewStatWithDefaults() *Stat {
-	stat = new(Stat)
+	stat := new(Stat)
 	stat.Stamp = 0
 	stat.Anoma = 0
 	return stat
@@ -26,7 +26,7 @@ func NewStat(name string, stamp int, value float32) *Stat {
 	stat := NewStatWithDefaults()
 	stat.Name = name
 	stat.Stamp = stamp
-	stat.Value - value
+	stat.Value = value
 	return stat
 }
 
@@ -45,11 +45,11 @@ func NewStatWithString(s string) (*Stat, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewStat(name, stamp, value), nil
+	return NewStat(name, stamp, float32(value)), nil
 }
 
 // Dump stat into string
 func (stat *Stat) String() string {
 	return fmt.Sprintf("%s %d %.3f %.3f",
-		stat.Name, stat.Stamp, stat.Value, state.Anoma)
+		stat.Name, stat.Stamp, stat.Value, stat.Anoma)
 }

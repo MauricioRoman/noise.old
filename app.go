@@ -16,16 +16,16 @@ type App struct {
 }
 
 // Create app by config.
-func NewApp(cfg *Config) (*App, error) {
+func NewApp(cfg *Config) *App {
 	db, err := bolt.Open(cfg.DBFile, 0600, nil)
 	if err != nil {
-		return nil, err
+		log.Fatalf("failed to open db: %v", err)
 	}
-	app = new(App)
+	app := new(App)
 	app.cfg = cfg
 	app.outs = make(map[*net.Conn]chan *Stat)
 	app.db = db
-	return app, nil
+	return app
 }
 
 // Start server.
@@ -79,7 +79,7 @@ func (app *App) handle(conn net.Conn) {
 
 // Handle connection request for pub
 func (app *App) handlePub(conn net.Conn) {
-	scanner := bufio.Scanner(conn)
+	scanner := bufio.NewScanner(conn)
 
 	for scanner.Scan() {
 		if err := scanner.Err(); err != nil {
@@ -89,7 +89,7 @@ func (app *App) handlePub(conn net.Conn) {
 		s := scanner.Text()
 		stat, err := NewStatWithString(s)
 		if err != nil {
-			log.Printf("invalid input, skipping..", s)
+			log.Printf("invalid input, skipping..")
 			continue
 		}
 		for _, out := range app.outs {
