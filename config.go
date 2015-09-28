@@ -13,6 +13,7 @@ type Config struct {
 	Factor      float64 `json:"factor"`
 	Strict      bool    `json:"strict"`
 	Periodicity int     `json:"periodicity"`
+	StartSize   int     `json:"start size"`
 }
 
 // Create config with default values
@@ -24,6 +25,7 @@ func NewConfigWithDefaults() *Config {
 	cfg.Factor = 0.06
 	cfg.Strict = true
 	cfg.Periodicity = 24 * 3600
+	cfg.StartSize = 50
 	return cfg
 }
 

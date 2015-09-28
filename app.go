@@ -126,29 +126,39 @@ func (app *App) HandleSub(conn net.Conn) {
 func (app *App) Detect(stat *Stat) error {
 	key, val, f := stat.Name, stat.Value, app.cfg.Factor
 	data, err := app.db.Get([]byte(key), nil)
-
 	if err != nil && err != leveldb.ErrNotFound {
 		return err
 	}
+
 	var avgOld, stdOld, avgNew, stdNew float64
+	var numOld, numNew int
+	var anoma float64
 
 	if data == nil || err == leveldb.ErrNotFound {
 		avgNew = val
 		stdNew = 0
+		numNew = 0
 	} else {
-		n, err := fmt.Sscanf(string(data), "%f %f", &avgOld, &stdOld)
-		if err != nil || n != 2 {
+		n, err := fmt.Sscanf(string(data), "%f %f %d", &avgOld, &stdOld, &numOld)
+		if err != nil || n != 3 {
 			return ErrInvalidDBVal
 		}
 		avgNew = (1-f)*avgOld + f*val
 		stdNew = math.Sqrt((1-f)*stdOld*stdOld + f*(val-avgOld)*(val-avgNew))
+		if numOld < app.cfg.StartSize {
+			numNew = numOld + 1
+			anoma = 0
+		} else {
+			numNew = numOld
+			anoma = (val - avgNew) / float64(3*stdNew)
+		}
 	}
 
-	dataNew := []byte(fmt.Sprintf("%.5f %.5f", avgNew, stdNew))
+	dataNew := []byte(fmt.Sprintf("%.5f %.5f %d", avgNew, stdNew, numNew))
 	err = app.db.Put([]byte(key), dataNew, nil)
 	if err != nil {
 		return err
 	}
-	stat.Anoma = (val - avgNew) / float64(3.0*stdNew)
+	stat.Anoma = anoma
 	return nil
 }
