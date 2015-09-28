@@ -4,6 +4,6 @@
   "dbpath": "noise.db",
   "factor": 0.06,
   "strict": true,
-  "periodicity": 86400,
-  "start size": 50
+  "periodicity": [240, 360],
+  "start size": 23
 }

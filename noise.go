@@ -37,7 +37,7 @@ type Config struct {
 	DBPath      string   `json:"dbpath"`
 	Factor      float64  `json:"factor"`
 	Strict      bool     `json:"strict"`
-	Periodicity int      `json:"periodicity"`
+	Periodicity [2]int   `json:"periodicity"`
 	StartSize   int      `json:"start size"`
 	WhiteList   []string `json: "whitelist"`
 	BlackList   []string `json: "blacklist"`
@@ -121,7 +121,7 @@ func NewConfigWithDefaults() *Config {
 	cfg.DBPath = "noise.db"
 	cfg.Factor = 0.06
 	cfg.Strict = true
-	cfg.Periodicity = 24 * 3600
+	cfg.Periodicity = [2]int{240, 360}
 	cfg.StartSize = 23
 	cfg.WhiteList = []string{"*"}
 	cfg.BlackList = []string{"statsd.*"}
@@ -292,14 +292,24 @@ func (app *App) Match(stat *Stat) bool {
 	return false
 }
 
+func (app *App) GetKey(stat *Stat) string {
+	offset := app.cfg.Periodicity[0]
+	nOffset := app.cfg.Periodicity[1]
+	periodicity := offset * nOffset
+	suffix := (stat.Stamp % periodicity) / offset
+	return fmt.Sprintf("%s-%d", stat.Name, suffix)
+}
+
 // Detect anomaly
 func (app *App) Detect(stat *Stat) error {
-	key, val, f := stat.Name, stat.Value, app.cfg.Factor
+	key := app.GetKey(stat)
+	val := stat.Value
+	fct := app.cfg.Factor
+
 	data, err := app.db.Get([]byte(key), nil)
 	if err != nil && err != leveldb.ErrNotFound {
 		return err
 	}
-
 	var avgOld, stdOld, avgNew, stdNew float64
 	var numOld, numNew int
 	var anoma float64
@@ -313,8 +323,8 @@ func (app *App) Detect(stat *Stat) error {
 		if err != nil || n != 3 {
 			return ErrInvalidDBVal
 		}
-		avgNew = (1-f)*avgOld + f*val
-		stdNew = math.Sqrt((1-f)*stdOld*stdOld + f*(val-avgOld)*(val-avgNew))
+		avgNew = (1-fct)*avgOld + fct*val
+		stdNew = math.Sqrt((1-fct)*stdOld*stdOld + fct*(val-avgOld)*(val-avgNew))
 		if numOld < app.cfg.StartSize {
 			numNew = numOld + 1
 			anoma = 0
