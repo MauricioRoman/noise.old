@@ -292,7 +292,6 @@ func (app *App) Match(stat *Stat) bool {
 			return false
 		}
 	}
-
 	for i := 0; i < len(wl); i++ {
 		matched, err := filepath.Match(wl[i], stat.Name)
 		if err != nil {
@@ -307,26 +306,43 @@ func (app *App) Match(stat *Stat) bool {
 	return false
 }
 
-// Detect if this stat is an anomaly
+// Detect if this stat is an anomaly via 3-sigma and weighted moving
+// average/standard-deviation. 3-sigma rule: States that nearly all values
+// (99.7%) lie within 3 standard deviations of the mean in a normal
+// distribution. To describe it in code:
+//
+//	func IsAnomaly(value) {
+//		return math.Abs(value - avg) > 3 * std
+//	}
+//
+// And the exponentially weighted moving averages and standard deviations
+// allow us to use only 2 numbers to describe the average and std trendings
+// (the followings are well-known as on-line formulas):
+//
+//	avg = avg * (1-f) + f*x
+//	std = sqrt((1-f)*std*std + f*(x-avgPrev)*(x-avg))
 func (app *App) Detect(stat *Stat) error {
-	key := app.getDBKey(stat)
-	val := stat.Value
-	fct := app.cfg.Factor
-
+	key := app.getDBKey(stat) // leveldb key
+	val := stat.Value         // stat value
+	fct := app.cfg.Factor     // wma factor
+	var avgOld float64        // old average value (in db)
+	var avgNew float64        // new average value (to be stored in db)
+	var stdOld float64        // old standard deviation (in db)
+	var stdNew float64        // new standard deviation (to be stored in db)
+	var numOld int            // new stats count ever processed (max to StartSize)
+	var numNew int            // old stats count ever processed (max to StartSize)
+	var result float64        // the 3-sigma result (x-avg)/(3*std)
 	data, err := app.db.Get([]byte(key), nil)
 	if err != nil && err != leveldb.ErrNotFound {
 		return err
 	}
-	var avgOld, stdOld, avgNew, stdNew float64
-	var numOld, numNew int
-	var anoma float64
-
 	if data == nil || err == leveldb.ErrNotFound {
 		avgNew = val
 		stdNew = 0
 		numNew = 0
 	} else {
-		n, err := fmt.Sscanf(string(data), "%f %f %d", &avgOld, &stdOld, &numOld)
+		n, err := fmt.Sscanf(string(data), "%f %f %d", &avgOld, &stdOld,
+			&numOld)
 		if err != nil || n != 3 {
 			return ErrInvalidDBVal
 		}
@@ -337,10 +353,10 @@ func (app *App) Detect(stat *Stat) error {
 		stdNew = math.Sqrt((1-fct)*stdOld*stdOld + fct*(val-avgOld)*(val-avgNew))
 		if numOld < app.cfg.StartSize {
 			numNew = numOld + 1
-			anoma = 0
+			result = 0
 		} else {
 			numNew = numOld
-			anoma = (val - avgNew) / float64(3*stdNew)
+			result = (val - avgNew) / float64(3*stdNew)
 		}
 	}
 	dataNew := []byte(fmt.Sprintf("%.5f %.5f %d", avgNew, stdNew, numNew))
@@ -348,7 +364,7 @@ func (app *App) Detect(stat *Stat) error {
 	if err != nil {
 		return err
 	}
-	stat.Anoma = anoma
+	stat.Anoma = result
 	return nil
 }
 
