@@ -49,7 +49,7 @@ func NewStatWithString(s string) (*Stat, error) {
 }
 
 // Dump stat into string
-func DumpStatAsString(stat *Stat) string {
+func (stat *Stat) String() string {
 	return fmt.Sprintf("%s %d %.3f %.3f",
 		stat.Name, stat.Stamp, stat.Value, state.Anoma)
 }
