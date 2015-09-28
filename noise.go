@@ -1,3 +1,6 @@
+// Copyright (c) Chao Wang <hit9@icloud.com>
+// Noise - Stats anomalies detection.
+
 package main
 
 import (
