@@ -1,6 +1,5 @@
 {
   "port": 9000,
-  "workers": 1,
   "dbpath": "noise.db",
   "factor": 0.06,
   "strict": true,

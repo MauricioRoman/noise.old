@@ -17,7 +17,6 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -31,15 +30,14 @@ const (
 )
 
 var (
-	ErrInvalidInput      = errors.New("invalid input from pub end")
-	ErrInvalidDBVal      = errors.New("invalid value is found in db")
-	ErrInvalidCfgFactor  = errors.New("invalid factor in config (require 0~1)")
-	ErrInvalidCfgWorkers = errors.New("invalid workers in config (require 1~100)")
+	ErrInvalidInput     = errors.New("invalid input from pub end")
+	ErrInvalidDBVal     = errors.New("invalid value is found in db")
+	ErrDBKeyNotFound    = errors.New("key is not found in db or val is nil")
+	ErrInvalidCfgFactor = errors.New("invalid factor in config (require 0~1)")
 )
 
 type Config struct {
 	Port        int      `json:"port"`        // port to bind
-	Workers     int      `json:"workers"`     // number of workers to start
 	DBPath      string   `json:"dbpath"`      // leveldb dir path
 	Factor      float64  `json:"factor"`      // weighted moving average factor
 	Strict      bool     `json:"strict"`      // if weaken latest stat value
@@ -74,7 +72,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to open %s: %v", fileName, err)
 	}
-	runtime.GOMAXPROCS(cfg.Workers)
 	app := NewApp(cfg)
 	app.Start()
 }
@@ -109,7 +106,7 @@ func NewStatWithString(s string) (*Stat, error) {
 	if err != nil {
 		return nil, err
 	}
-	value, err := strconv.ParseFloat(words[2], 32)
+	value, err := strconv.ParseFloat(words[2], 64)
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +123,6 @@ func (stat *Stat) String() string {
 func NewConfigWithDefaults() *Config {
 	cfg := new(Config)
 	cfg.Port = 9000
-	cfg.Workers = 1
 	cfg.DBPath = "noise.db"
 	cfg.Factor = 0.06
 	cfg.Strict = true
@@ -138,8 +134,7 @@ func NewConfigWithDefaults() *Config {
 }
 
 // Create config from json bytes. Possible errors are from
-// `json.Unmarshal` and self-defined `ErrInvalidCfgFactor`
-// and `ErrInvalidCfgWorkers`.
+// `json.Unmarshal` and self-defined `ErrInvalidCfgFactor`.
 func NewConfigWithJSONBytes(data []byte) (*Config, error) {
 	cfg := NewConfigWithDefaults()
 	err := json.Unmarshal(data, cfg)
@@ -148,9 +143,6 @@ func NewConfigWithJSONBytes(data []byte) (*Config, error) {
 	}
 	if cfg.Factor >= 1.0 || cfg.Factor <= 0 {
 		return nil, ErrInvalidCfgFactor
-	}
-	if cfg.Workers < 1 || cfg.Workers > 100 {
-		return nil, ErrInvalidCfgWorkers
 	}
 	return cfg, nil
 }
@@ -205,20 +197,18 @@ func (app *App) Start() {
 func (app *App) Handle(conn net.Conn) {
 	addr := conn.RemoteAddr()
 	log.Printf("conn %s established", addr)
-
 	defer func() {
 		conn.Close()
 		log.Printf("conn %s disconnected", addr)
 	}()
-
 	scanner := bufio.NewScanner(conn)
-
 	if scanner.Scan() {
 		if err := scanner.Err(); err != nil {
 			log.Printf("failed to read data: %v, closing conn..", err)
 			return
 		}
 		s := scanner.Text()
+		s = strings.TrimSpace(s)
 		switch strings.ToLower(s) {
 		case ACTION_PUB:
 			log.Printf("conn %s action pub", addr)
@@ -249,10 +239,10 @@ func (app *App) HandlePub(conn net.Conn) {
 			log.Printf("invalid input, skipping..")
 			continue
 		}
+		startAt := time.Now()
 		if !app.Match(stat) {
 			continue
 		}
-		startAt := time.Now()
 		err = app.Detect(stat)
 		if err != nil {
 			log.Printf("failed to detect %s: %v, skipping..", stat.Name, err)
@@ -335,30 +325,17 @@ func (app *App) Match(stat *Stat) bool {
 // The only one possible error may be returned is ErrInvalidDBVal, when
 // the db data is not performed belongs to us.
 func (app *App) Detect(stat *Stat) error {
-	key := app.getDBKey(stat) // leveldb key
-	val := stat.Value         // stat value
-	fct := app.cfg.Factor     // wma factor
-	var avgOld float64        // old average value (in db)
-	var avgNew float64        // new average value (to be stored in db)
-	var stdOld float64        // old standard deviation (in db)
-	var stdNew float64        // new standard deviation (to be stored in db)
-	var numOld int            // new stats count ever processed (max to StartSize)
-	var numNew int            // old stats count ever processed (max to StartSize)
-	var result float64        // the 3-sigma result (x-avg)/(3*std)
-	data, err := app.db.Get([]byte(key), nil)
-	if err != nil && err != leveldb.ErrNotFound {
+	key := app.GetDBKey(stat)
+	val := stat.Value
+	fct := app.cfg.Factor
+	var avgNew, stdNew, result float64
+	var numNew int
+	avgNew, stdNew, numNew, result = val, 0, 0, 0
+	avgOld, stdOld, numOld, err := app.GetData(key)
+	if err != nil && err != ErrDBKeyNotFound {
 		return err
 	}
-	if data == nil || err == leveldb.ErrNotFound {
-		avgNew = val
-		stdNew = 0
-		numNew = 0
-	} else {
-		n, err := fmt.Sscanf(string(data), "%f %f %d", &avgOld, &stdOld,
-			&numOld)
-		if err != nil || n != 3 {
-			return ErrInvalidDBVal
-		}
+	if err != ErrDBKeyNotFound {
 		if !app.cfg.Strict {
 			val = (val + avgOld) / float64(2)
 		}
@@ -372,9 +349,7 @@ func (app *App) Detect(stat *Stat) error {
 			result = (val - avgNew) / float64(3*stdNew)
 		}
 	}
-	dataNew := []byte(fmt.Sprintf("%.5f %.5f %d", avgNew, stdNew, numNew))
-	err = app.db.Put([]byte(key), dataNew, nil)
-	if err != nil {
+	if err = app.PutData(key, avgNew, stdNew, numNew); err != nil {
 		return err
 	}
 	stat.Anoma = result
@@ -385,10 +360,35 @@ func (app *App) Detect(stat *Stat) error {
 // into multiple grids, with each grid shares the same time span, this
 // function will find the grid for this stat by its stamp. By this way,
 // only the stats on the same phase will be considered.
-func (app *App) getDBKey(stat *Stat) string {
+func (app *App) GetDBKey(stat *Stat) string {
 	grid := app.cfg.Periodicity[0]
 	numGrids := app.cfg.Periodicity[1]
 	periodicity := grid * numGrids
 	gridNo := (stat.Stamp % periodicity) / grid
 	return fmt.Sprintf("%s:%d", stat.Name, gridNo)
+}
+
+// Get old avg, std, num from leveldb. Possible errors are ErrInvalidDBVal,
+// ErrDBKeyNotFound
+func (app *App) GetData(key string) (avg float64, std float64, num int, err error) {
+	data, err := app.db.Get([]byte(key), nil)
+	if err == leveldb.ErrNotFound || data == nil {
+		err = ErrDBKeyNotFound
+		return
+	}
+	if err != nil {
+		return
+	}
+	n, err := fmt.Sscanf(string(data), "%f %f %d", &avg, &std, &num)
+	if err != nil || n != 3 {
+		err = ErrInvalidDBVal
+		return
+	}
+	return
+}
+
+// Save new avg, std, num into leveldb. Possible errors are from leveldb.
+func (app *App) PutData(key string, avg float64, std float64, num int) error {
+	data := []byte(fmt.Sprintf("%.5f %.5f %d", avg, std, num))
+	return app.db.Put([]byte(key), data, nil)
 }
