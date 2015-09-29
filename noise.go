@@ -346,7 +346,11 @@ func (app *App) Detect(stat *Stat) error {
 			result = 0
 		} else {
 			numNew = numOld
-			result = (val - avgNew) / float64(3*stdNew)
+			if stdNew == 0 {
+				result = 0
+			} else {
+				result = (val - avgNew) / float64(3*stdNew)
+			}
 		}
 	}
 	if err = app.PutData(key, avgNew, stdNew, numNew); err != nil {
