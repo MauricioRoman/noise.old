@@ -346,10 +346,9 @@ func (app *App) Detect(stat *Stat) error {
 			result = 0
 		} else {
 			numNew = numOld
-			if stdNew == 0 {
+			result = (val - avgNew) / float64(3*stdNew)
+			if math.IsNaN(result) {
 				result = 0
-			} else {
-				result = (val - avgNew) / float64(3*stdNew)
 			}
 		}
 	}
