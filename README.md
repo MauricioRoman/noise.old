@@ -89,7 +89,7 @@ How to get `avg` and `std`? We may need to store all stats on disk, each time
 when new stat comes in, we should query all stats in this series from database,
 and compute the `avg` and `std` via the traditional math formulas. With ewma (the
 exponentially weighted moving average/standard deviation), the storage and the compution
-are both not required:
+are both not required (the `f` in following code is a float between 0 and 1):
 
 ```python
 avgOld = avg
