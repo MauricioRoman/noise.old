@@ -124,10 +124,10 @@ func NewConfigWithDefaults() *Config {
 	cfg := new(Config)
 	cfg.Port = 9000
 	cfg.DBPath = "noise.db"
-	cfg.Factor = 0.06
+	cfg.Factor = 0.07
 	cfg.Strict = true
-	cfg.Periodicity = [2]int{240, 360}
-	cfg.StartSize = 23
+	cfg.Periodicity = [2]int{480, 180}
+	cfg.StartSize = 32
 	cfg.WhiteList = []string{"*"}
 	cfg.BlackList = []string{"statsd.*"}
 	return cfg
@@ -249,7 +249,7 @@ func (app *App) HandlePub(conn net.Conn) {
 			continue
 		}
 		elapsed := time.Since(startAt)
-		log.Printf("(%dms) detected => %s", elapsed.Nanoseconds()/1E6, stat.String())
+		log.Printf("(%dms) %s", elapsed.Nanoseconds()/1E6, stat.String())
 		for _, out := range app.outs {
 			if math.Abs(stat.Anoma) >= 1.0 {
 				out <- stat
