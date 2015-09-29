@@ -1,12 +1,17 @@
-// Copyright (c) 2015, Chao Wang <hit9@icloud.com>
-// All rights reserved.
-// Statsd backend to work as a noise pub client.
-// Optional configs:
-//   noisHost, default: '0.0.0.0'
-//   noisePort, default: 9000
-//   noiseIgnores, default: ['statsd.*']
-//   noiseTimerDataFields, default: ['mean_90', 'count_ps']
-// Metric types supported: `counter_rates` & `timer_data`
+/**
+ * Copyright (c) 2015, Chao Wang <hit9@icloud.com>
+ * All rights reserved.
+ *
+ *  Statsd backend to work as a noise pub client.
+ *  Optional configs:
+ *
+ *   noisHost, default: '0.0.0.0'
+ *   noisePort, default: 9000
+ *   noiseIgnores, default: ['statsd.*']
+ *   noiseTimerDataFields, default: ['mean_90', 'count_ps']
+ *
+ * Metric types supported: `counter_rates` & `timer_data`.
+ */
 
 'use strict';
 
@@ -107,7 +112,6 @@ Noise.prototype.flush = function(time, data) {
       });
   }
 };
-
 
 exports.init = function(uptime, _config, events, _logger) {
   var noise;
