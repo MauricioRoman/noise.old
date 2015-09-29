@@ -1,3 +1,4 @@
 .*.sw[opn]
 noise
 noise.db
+node_modules
