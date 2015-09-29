@@ -368,7 +368,7 @@ func (app *App) GetDBKey(stat *Stat) string {
 	numGrids := app.cfg.Periodicity[1]
 	periodicity := grid * numGrids
 	gridNo := (stat.Stamp % periodicity) / grid
-	return fmt.Sprintf("%s:%d", stat.Name, gridNo)
+	return fmt.Sprintf("%s:%dx%d-%d", stat.Name, grid, numGrids, gridNo)
 }
 
 // Get old avg, std, num from leveldb. Possible errors are ErrInvalidDBVal,
