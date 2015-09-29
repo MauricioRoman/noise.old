@@ -20,14 +20,14 @@ Installation
 
     go get github.com/hit9/noise
 
-Usage
-------
+Command Line Usage
+------------------
 
     $ ./noise ./config.json
     2015/09/29 17:36:23 reading config from ./config.json..
     2015/09/29 17:36:23 listening on 0.0.0.0:9000..
 
-Stats Publish
+Publish Stats
 -------------
 
 Just telnet to port 9000 and type `pub`, then send stats to noise line by line:
@@ -38,8 +38,8 @@ pub
 counter.foo 1443514447 3.14
 ```
 
-Stats Subscribe
----------------
+Subscribe Anomalies
+--------------------
 
 Just telnet to port 9000 and type `sub`, noise will push anomalies automatically:
 
@@ -50,10 +50,10 @@ counter.foo 1443515465 10.900 1.122
 counter.foo 1443515495 0.900 -1.151
 ```
 
-With Statsd
------------
+Publish from Statsd
+-------------------
 
-Install `noise-statsd` vid npm and add it to statsd's config:
+Install `noise-statsd` vid npm and add it to statsd's backends list in config:
 
 ```js
 {
@@ -108,6 +108,8 @@ Configurations
 * **strict** if set false, noise will use `(avg+x)/2` as new `x`, default: `true`
 * **periodicity** its format is `[grid, numGrids]` and we suppose that `grod*numGrids` is
   this metric's `periodicity`. default: `[480, 180]`
+* **whitelist** wildcards list to allow stats passing, default: `["*"]`
+* **blacklist** wildcards list to disallow stats passing, default: `["statsd.*"]`
 
 Net Protocol
 ------------
