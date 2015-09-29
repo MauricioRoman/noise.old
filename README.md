@@ -81,7 +81,7 @@ m = abs(x-avg)/(3.0*std)
 ```
 
 `m` is also the last field in noise's output (when you subscribe anomalies
-from it). If `m > 1`, then the series is currently anomalous,
+from it). If `m > 1` or `m < -1`, that means the series is currently anomalous,
 and the `m` large, the more serious anamlous. And more, `m > 0` shows that the
 serires current trending is up, otherwise down.
 
@@ -98,7 +98,8 @@ std = sqrt((1-f)*std*std + f*(x-avgOld)*(x-avg))
 ```
 
 The above recursive formulas make `avg` and `std` following stats trending. By this way,
-noise just requires very small disk storage and runs fast.
+noise just requires 2 numbers (the moving `avg` and `std`) to store on disk, and the
+compution is simple, fast.
 
 Configurations
 --------------
