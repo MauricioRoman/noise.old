@@ -249,7 +249,7 @@ func (app *App) HandlePub(conn net.Conn) {
 			continue
 		}
 		elapsed := time.Since(startAt)
-		log.Printf("%dms %s", elapsed.Nanoseconds()/1E6, stat.String())
+		log.Printf("%.2fms %s", float64(elapsed.Nanoseconds())/float64(1000*1000), stat.String())
 		for _, out := range app.outs {
 			if math.Abs(stat.Anoma) >= 1.0 {
 				out <- stat
