@@ -122,4 +122,4 @@ name timestamp value anoma '\n'
 License
 --------
 
-MIT. (c) 2015 Chao Wang.
+MIT. (c) 2015 Eleme, Inc.

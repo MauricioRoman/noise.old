@@ -1,5 +1,5 @@
-// Copyright (c) 2015, Chao Wang <hit9@icloud.com>
-// All rights reserved.
+// Copyright (c) 2015, Chao Wang <hit9@ele.me>
+// All rights reserved by Eleme, Inc.
 //
 // Noise is a simple daemon to detect anomalous stats.
 
