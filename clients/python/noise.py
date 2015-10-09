@@ -36,8 +36,8 @@ class Noise(object):
         self.host = host
         self.port = port
         self.sock = None
-        self.is_pub = False
-        self.is_sub = False
+        self.is_pub = None
+        self.is_sub = None
 
     def connect(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -51,16 +51,19 @@ class Noise(object):
             raise RuntimeError("Cannot pub in sub mode")
         if self.sock is None:
             self.connect()
-        self.sock.send("pub\n")
-        self.is_pub = True
+        if self.is_pub is None:
+            self.sock.send("pub\n")
+            self.is_pub = True
+        return self.sock.send("%s %d %.5f\n" % (name, stamp, value))
 
     def sub(self, on_anomaly):
         if self.is_pub:
             raise RuntimeError("Cannot sub in pub mode")
         if self.sock is None:
             self.connect()
-        self.sock.send("sub\n")
-        self.is_sub = True
+        if self.is_sub is None:
+            self.sock.send("sub\n")
+            self.is_sub = True
         buf = ''
         while 1:
             rlist, wlist, xlist = select.select([self.sock], [], [])
