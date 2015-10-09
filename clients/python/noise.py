@@ -2,7 +2,7 @@
 
 """Python client for github.com/eleme/noise::
 
-    pip install noise.py
+    pip install noise
 
 command line usage::
 

@@ -14,7 +14,7 @@ Usage
 From command line:
 
 ```bash
-python -m noise.py
+python -m noise
 ```
 
 In Python, to make a new noise client:
