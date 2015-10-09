@@ -3,3 +3,4 @@ noise
 noise.db
 node_modules
 !noise/
+test-config.json
