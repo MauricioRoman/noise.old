@@ -23,7 +23,7 @@ Installation
 Command Line Usage
 ------------------
 
-    $ ./noise ./config.json
+    $ ./noise -c ./config.json
     2015/09/29 17:36:23 reading config from ./config.json..
     2015/09/29 17:36:23 listening on 0.0.0.0:9000..
 
