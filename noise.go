@@ -217,7 +217,7 @@ func (app *App) Handle(conn net.Conn) {
 			log.Printf("conn %s action sub", addr)
 			app.HandleSub(conn)
 		default:
-			log.Printf("conn %s action unknown", addr)
+			log.Printf("conn %s action unknown: %s", addr, s)
 		}
 	}
 }
