@@ -54,7 +54,8 @@ class Noise(object):
         if self.is_pub is None:
             self.sock.send("pub\n")
             self.is_pub = True
-        return self.sock.send("%s %d %.5f\n" % (name, stamp, value))
+        line = "%s %d %.5f\n" % (name, stamp, value)
+        return self.sock.send(line)
 
     def sub(self, on_anomaly):
         if self.is_pub:
