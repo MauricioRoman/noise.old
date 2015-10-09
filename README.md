@@ -65,6 +65,7 @@ Client Implementations
 ----------------------
 
 - [Go](clients/go)
+- [Nodejs](clients/nodejs)
 - [Python](clients/python)
 - [Statsd](clients/statsd)
 
