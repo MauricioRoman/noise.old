@@ -77,3 +77,6 @@ function main() {
     console.log(name, stamp, value, anoma);
   });
 }
+
+exports.Noise = Noise;
+exports.main = main;
