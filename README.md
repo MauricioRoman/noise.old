@@ -18,7 +18,7 @@ Features
 Installation
 ------------
 
-    go get github.com/hit9/noise
+    go get github.com/eleme/noise
 
 Command Line Usage
 ------------------
