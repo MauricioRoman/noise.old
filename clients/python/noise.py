@@ -83,7 +83,8 @@ class Noise(object):
                     lines = lines[:-1]
                 for line in lines:
                     args = line.split()
-                    on_anomaly(*args)
+                    on_anomaly(args[0], int(args[1]), float(args[2]),
+                               float(args[3]))
 
 
 if __name__ == '__main__':
