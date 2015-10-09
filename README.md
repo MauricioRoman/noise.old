@@ -61,6 +61,12 @@ Install `noise-statsd` vid npm and add it to statsd's backends list in config:
 }
 ```
 
+Client Implementations
+----------------------
+
+- [Python](clients/python)
+- [Statsd](clients/statsd)
+
 Detection Algorithm
 -------------------
 
