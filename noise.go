@@ -212,7 +212,7 @@ func (app *App) Handle(conn net.Conn) {
 		switch strings.ToLower(s) {
 		case ACTION_PUB:
 			log.Printf("conn %s action pub", addr)
-			app.HandlePub(conn)
+			app.HandlePub(conn, scanner)
 		case ACTION_SUB:
 			log.Printf("conn %s action sub", addr)
 			app.HandleSub(conn)
@@ -226,8 +226,7 @@ func (app *App) Handle(conn net.Conn) {
 // forever loop to scan (sometimes wait for) input lines, parse
 // into stats, test them with patterns in white/blacklist, then
 // do the core detection.
-func (app *App) HandlePub(conn net.Conn) {
-	scanner := bufio.NewScanner(conn)
+func (app *App) HandlePub(conn net.Conn, scanner *bufio.Scanner) {
 	for scanner.Scan() {
 		if err := scanner.Err(); err != nil {
 			log.Printf("failed to read data: %v, closing conn..", err)
