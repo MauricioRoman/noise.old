@@ -24,6 +24,8 @@ import (
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
+const VERSION = "0.1" // noise version
+
 const (
 	ACTION_PUB = "pub" // detail command of action pub
 	ACTION_SUB = "sub" // detail command of action sub
@@ -62,15 +64,20 @@ type Stat struct {
 
 // Program main entry.
 func main() {
+	fileName := flag.String("c", "config.json", "config path")
+	version := flag.Bool("v", false, "show version")
 	flag.Parse()
-	if flag.NArg() != 1 {
-		fmt.Fprintln(os.Stderr, "help: noise <path/to/config.json>")
+	if flag.NArg() > 0 && flag.NFlag() != 1 {
+		flag.PrintDefaults()
 		os.Exit(1)
 	}
-	fileName := flag.Args()[0]
-	cfg, err := NewConfigWithJSONFile(fileName)
+	if *version {
+		fmt.Fprintln(os.Stderr, VERSION)
+		os.Exit(1)
+	}
+	cfg, err := NewConfigWithJSONFile(*fileName)
 	if err != nil {
-		log.Fatalf("failed to open %s: %v", fileName, err)
+		log.Fatalf("failed to open %s: %v", *fileName, err)
 	}
 	app := NewApp(cfg)
 	app.Start()
