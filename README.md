@@ -84,7 +84,7 @@ if abs(x - avg) > 3*std:
 And now we name the ratio of `abs(x - avg)` to `3 * std` as `m`:
 
 ```python
-m = abs(x-avg)/(3.0*std)
+m = abs(x-avg) / (3.0*std)
 ```
 
 `m` is also the last field in noise's output (when you subscribe anomalies
