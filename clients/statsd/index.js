@@ -1,18 +1,4 @@
-/**
- * Copyright (c) 2015, Chao Wang <hit9@ele.me>
- * All rights reserved by Eleme, Inc.
- *
- *  Statsd backend to work as a noise pub client.
- *  Optional configs:
- *
- *   noisHost, default: '0.0.0.0'
- *   noisePort, default: 9000
- *   noiseIgnores, default: ['statsd.*']
- *   noiseTimerDataFields, default: ['mean_90', 'count_ps']
- *
- * Metric types supported: `counter_rates` & `timer_data`.
- */
-
+// Statsd backend for github.com/eleme/noise.
 'use strict';
 
 var net = require('net');
