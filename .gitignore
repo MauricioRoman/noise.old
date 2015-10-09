@@ -1,4 +1,4 @@
 .*.sw[opn]
-noise
+./noise
 noise.db
 node_modules
