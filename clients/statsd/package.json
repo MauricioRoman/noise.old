@@ -1,12 +1,12 @@
 {
   "name": "noise-statsd",
   "description": "Statsd backend for github.com/eleme/noise",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "author": "Chao Wang <hit9@ele.me>",
   "homepage": "https://github.com/eleme/noise.git",
   "bugs": "https://github.com/eleme/noise/issues",
   "keywords": ["noise", "statsd"],
-  "main": "./statsd.js",
+  "main": "./index.js",
   "repository": {
     "type": "git",
     "url": "git://github.com/eleme/noise.git"
