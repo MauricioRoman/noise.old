@@ -22,10 +22,10 @@ Noise will catch the latest stat `300` and report it as an anomaly.
 
 Why don't we just set a fixed threshold instead (i.e. 200ms)? This may also work but we may
 have a lot of apis to monitor, some are fast (~10ms) and some are slow (~1000ms), it is hard
-to set a good threshold for each one, and also hard to set an appropriate global threshold for all.
-Noise sloves this via 3-sigma and ewma, it gives dynamic thresholds for each metric ("learned" from
-history data). We don't have to set a threshold for each metric, it will find the "thresholds"
-automatically.
+to set a good threshold for each one, and also hard to set an appropriate global threshold
+for all. Noise sloves this via 3-sigma and ewma, it gives dynamic thresholds for each metric
+("learned" from history data). We don't have to set a threshold for each metric, it will find
+the "thresholds" automatically.
 
 Features
 --------
@@ -52,34 +52,28 @@ Publish Stats
 
 Just telnet to port 9000 and type `pub`, then send stats to noise line by line:
 
-```bash
-$ telnet 0.0.0.0 9000
-pub
-counter.foo 1443514447 3.14
-```
+    $ telnet 0.0.0.0 9000
+    pub
+    counter.foo 1443514447 3.14
 
 Subscribe Anomalies
 --------------------
 
 Just telnet to port 9000 and type `sub`, noise will push anomalies automatically:
 
-```bash
-$ telnet 0.0.0.0 9000
-sub
-counter.foo 1443515465 10.900 1.122
-counter.foo 1443515495 0.900 -1.151
-```
+    $ telnet 0.0.0.0 9000
+    sub
+    counter.foo 1443515465 10.900 1.122
+    counter.foo 1443515495 0.900 -1.151
 
 Publish from Statsd
 -------------------
 
-Install `noise-statsd` vid npm and add it to statsd's backends list in config:
+Install `noise-statsd` via npm and add it to statsd's backends list in config:
 
-```js
-{
-, backends: ['noise-statsd']
-}
-```
+    {
+    , backends: ['noise-statsd']
+    }
 
 Client Implementations
 ----------------------
@@ -95,22 +89,22 @@ Detection Algorithm
 The core algorithm is the [3-sigma rule](https://en.wikipedia.org/wiki/68–95–99.7_rule):
 states that nearly all values (99.7%) lie within 3 standard
 deviations of the mean in a normal distribution. So if a stat dosen't meet
-this rule, it must be an anomaly. Describe it in pseudocode:
+this rule, it must be an anomaly. To describe it in pseudocode:
 
 ```python
-if abs(x - avg) > 3*std:
+if abs(x-avg) > 3*std:
     return True  # anomaly
 ```
 
-And now we name the ratio of `abs(x - avg)` to `3 * std` as `m`:
+And now we name the ratio of `abs(x-avg)` to `3*std` as `m`:
 
 ```python
 m = abs(x-avg) / (3.0*std)
 ```
 
 `m` is also the last field in noise's output (when you subscribe anomalies
-from it). If `m > 1` or `m < -1`, that means the series is currently anomalous,
-and the `m` large, the more serious anamlous. And more, `m > 0` shows that the
+from it). If `abs(m)>1`, that means the series is currently anomalous, and the 
+`abs(m)` large, the more serious anamlous. And more, `m > 0` shows that the
 serires current trending is up, otherwise down.
 
 How to get `avg` and `std`? We may need to store all stats on disk, each time
@@ -131,6 +125,7 @@ compution is simple, fast.
 
 Configurations
 --------------
+
 * **port** tcp port to bind, default: `9000`
 * **dbpath** leveldb database directory path, default: `noise.db`
 * **factor** the ewma factor (0~1), the `factor` larger the timeliness better, default: `0.07`
@@ -150,4 +145,4 @@ name timestamp value anoma '\n'
 License
 --------
 
-MIT. (c) 2015 Eleme, Inc.
+MIT. (c) 2015 Chao Wang, Eleme, Inc. <hit9@ele.me>
