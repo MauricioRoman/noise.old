@@ -50,9 +50,10 @@ type Config struct {
 }
 
 type App struct {
-	cfg  *Config                  // ref of app config
-	db   *leveldb.DB              // ref of leveldb handle
-	outs map[*net.Conn]chan *Stat // output channels map
+	cfg   *Config                  // ref of app config
+	debug bool                     // is in debug mode
+	db    *leveldb.DB              // ref of leveldb handle
+	outs  map[*net.Conn]chan *Stat // output channels map
 }
 
 type Stat struct {
@@ -65,6 +66,7 @@ type Stat struct {
 // Program main entry.
 func main() {
 	fileName := flag.String("c", "config.json", "config path")
+	debug := flag.Bool("d", false, "debug mode")
 	version := flag.Bool("v", false, "show version")
 	flag.Parse()
 	if flag.NArg() > 0 && flag.NFlag() != 1 {
@@ -79,7 +81,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to open %s: %v", *fileName, err)
 	}
-	app := NewApp(cfg)
+	app := NewApp(cfg, *debug)
 	app.Start()
 }
 
@@ -167,7 +169,7 @@ func NewConfigWithJSONFile(fileName string) (*Config, error) {
 
 // Create an app instance by config. It will try to open
 // leveldb at first and exit the process on failure.
-func NewApp(cfg *Config) *App {
+func NewApp(cfg *Config, debug bool) *App {
 	db, err := leveldb.OpenFile(cfg.DBPath, nil)
 	if err != nil {
 		log.Fatalf("failed to open db: %v", err)
@@ -176,6 +178,7 @@ func NewApp(cfg *Config) *App {
 	app.cfg = cfg
 	app.outs = make(map[*net.Conn]chan *Stat)
 	app.db = db
+	app.debug = debug
 	return app
 }
 
@@ -234,6 +237,8 @@ func (app *App) Handle(conn net.Conn) {
 // into stats, test them with patterns in white/blacklist, then
 // do the core detection.
 func (app *App) HandlePub(conn net.Conn, scanner *bufio.Scanner) {
+	var startAt time.Time
+	var elapsed time.Duration
 	for scanner.Scan() {
 		if err := scanner.Err(); err != nil {
 			log.Printf("failed to read data: %v, closing conn..", err)
@@ -245,7 +250,9 @@ func (app *App) HandlePub(conn net.Conn, scanner *bufio.Scanner) {
 			log.Printf("invalid input, skipping..")
 			continue
 		}
-		startAt := time.Now()
+		if app.debug {
+			startAt = time.Now()
+		}
 		if !app.Match(stat) {
 			continue
 		}
@@ -254,8 +261,10 @@ func (app *App) HandlePub(conn net.Conn, scanner *bufio.Scanner) {
 			log.Printf("failed to detect %s: %v, skipping..", stat.Name, err)
 			continue
 		}
-		elapsed := time.Since(startAt)
-		log.Printf("%.2fms %s", float64(elapsed.Nanoseconds())/float64(1000*1000), stat.String())
+		if app.debug {
+			elapsed = time.Since(startAt)
+			log.Printf("%.2fms %s", float64(elapsed.Nanoseconds())/float64(1000*1000), stat.String())
+		}
 		for _, out := range app.outs {
 			if math.Abs(stat.Anoma) >= 1.0 {
 				out <- stat
