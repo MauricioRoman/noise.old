@@ -4,16 +4,36 @@ Noise
 Noise is a simple daemon to detect anomalous stats, via the well-known
 [3-sigma rule (68-95-99.7 rule)](https://en.wikipedia.org/wiki/68%E2%80%9395%E2%80%9399.7_rule)
 and [exponential weighted moving average (ewma)](https://en.wikipedia.org/wiki/Moving_average).
-Input stats stream (for example, from statsd), and noise will output the
-anomalous datapoints.
+It can detect anomalies in time series **without any preconfigured thresholds**. Just input
+stats stream (i.e. from [statsd](https://github.com/etsy/statsd)), noise will filter out
+the anomalies and broadcast them to subscribers.
+
+Use Case
+--------
+
+We can use noise to monitor website/rpc interfaces, including api called frequency,
+api response time(time cost per call) and exceptions count. For example, we have an api
+named `get_name`, this api's response time (in ms) is reported to noise from statsd every
+10 seconds:
+
+    51, 53, 49, 48, 45, 50, 51, 52, 55, 56, .., 300
+
+Noise will catch the latest stat `300` and report it as an anomaly.
+
+Why don't we just set a fixed threshold instead (i.e. 200ms)? This may also work but we may
+have a lot of apis to monitor, some are fast (~10ms) and some are slow (~1000ms), it is hard
+to set a good threshold for each one, and also hard to set an appropriate global threshold for all.
+Noise sloves this via 3-sigma and ewma, it gives dynamic thresholds for each metric ("learned" from
+history data). We don't have to set a threshold for each metric, it will find the "thresholds"
+automatically.
 
 Features
 --------
 
-* Automatic detection (no more thresholds).
-* Follows the stats trending (via ewma).
-* Minimal disk storage (detection relies on only 2 numbers).
-* Pub/Sub implementation (clients can publish stats or subscribe anomalies).
+* Automatic anomalies detection, no more thresholds.
+* Minimal disk storage, each metric relies on only 2 numbers.
+* Pub/Sub client implementation, publish stats and subscribe anomalies.
+* Following the stats trending (via ewma).
 
 Installation
 ------------
