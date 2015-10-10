@@ -78,10 +78,12 @@ Install `noise-statsd` via npm and add it to statsd's backends list in config:
 Client Implementations
 ----------------------
 
-- [Go](clients/go)
-- [Nodejs](clients/nodejs)
-- [Python](clients/python)
-- [Statsd](clients/statsd)
+- [Go](clients/go) by @hit9
+- [Nodejs](clients/nodejs) by @hit9
+- [Python](clients/python) by @hit9
+- [Statsd](clients/statsd) by @hit9
+
+Welcome for pull requests, thanks!
 
 Detection Algorithm
 -------------------
