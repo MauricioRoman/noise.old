@@ -247,7 +247,7 @@ func (app *App) HandlePub(conn net.Conn, scanner *bufio.Scanner) {
 		s := scanner.Text()
 		stat, err := NewStatWithString(s)
 		if err != nil {
-			log.Printf("invalid input, skipping..")
+			log.Printf("invalid input from %s, skipping..", conn.RemoteAddr())
 			continue
 		}
 		if app.debug {
@@ -299,8 +299,10 @@ func (app *App) Match(stat *Stat) bool {
 	for i := 0; i < len(bl); i++ {
 		matched, err := filepath.Match(bl[i], stat.Name)
 		if err != nil {
-			log.Printf("invalid pattern in blacklist: %s, %v, skipping..",
-				bl[i], err)
+			if app.debug {
+				log.Printf("invalid pattern in blacklist: %s, %v, skipping..",
+					bl[i], err)
+			}
 			continue
 		}
 		if matched {
@@ -310,8 +312,10 @@ func (app *App) Match(stat *Stat) bool {
 	for i := 0; i < len(wl); i++ {
 		matched, err := filepath.Match(wl[i], stat.Name)
 		if err != nil {
-			log.Printf("bad pattern in whitelist: %s, %v, skipping..",
-				wl[i], err)
+			if app.debug {
+				log.Printf("bad pattern in whitelist: %s, %v, skipping..",
+					wl[i], err)
+			}
 			continue
 		}
 		if matched {
