@@ -24,7 +24,7 @@ import (
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
-const VERSION = "0.1" // noise version
+const VERSION = "0.2" // noise version
 
 const (
 	ACTION_PUB = "pub" // detail command of action pub
