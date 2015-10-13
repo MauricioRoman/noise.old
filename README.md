@@ -56,6 +56,8 @@ Just telnet to port 9000 and type `pub`, then send stats to noise line by line:
     pub
     counter.foo 1443514447 3.14
 
+Input: `name timestamp value`
+
 Subscribe Anomalies
 --------------------
 
@@ -63,8 +65,10 @@ Just telnet to port 9000 and type `sub`, noise will push anomalies automatically
 
     $ telnet 0.0.0.0 9000
     sub
-    counter.foo 1443515465 10.900 1.122
-    counter.foo 1443515495 0.900 -1.151
+    counter.foo 1443515465 10.900 1.122 10.8 19.2
+    counter.foo 1443515495 0.900 -1.151 10.7 7.9
+
+Output: `name timestamp value anomalous_serverity average_old average_new`
 
 Publish from Statsd
 -------------------
