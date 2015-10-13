@@ -24,7 +24,7 @@ import (
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
-const VERSION = "0.2" // noise version
+const VERSION = "0.3" // noise version
 
 const (
 	ACTION_PUB = "pub" // detail command of action pub
@@ -57,10 +57,12 @@ type App struct {
 }
 
 type Stat struct {
-	Name  string  // stat name, e.g. timer.count_ps.api
-	Stamp int     // stat timestamp, in second e.g. 1412762335
-	Value float64 // stat value, in float, e.g. 14.3
-	Anoma float64 // stat anomalous factor, e.g. 1.2 (abs>=1 => anomaly)
+	Name   string  // stat name, e.g. timer.count_ps.api
+	Stamp  int     // stat timestamp, in second e.g. 1412762335
+	Value  float64 // stat value, in float, e.g. 14.3
+	Anoma  float64 // stat anomalous factor, e.g. 1.2 (abs>=1 => anomaly)
+	AvgOld float64 // stat old avg value
+	AvgNew float64 // stat new avg value
 }
 
 // Program main entry.
@@ -124,8 +126,8 @@ func NewStatWithString(s string) (*Stat, error) {
 
 // Dump or format stat into string.
 func (stat *Stat) String() string {
-	return fmt.Sprintf("%s %d %.3f %.3f",
-		stat.Name, stat.Stamp, stat.Value, stat.Anoma)
+	return fmt.Sprintf("%s %d %.3f %.3f %.3f %.3f",
+		stat.Name, stat.Stamp, stat.Value, stat.Anoma, stat.AvgOld, stat.AvgNew)
 }
 
 // Create config with default values.
@@ -370,11 +372,16 @@ func (app *App) Detect(stat *Stat) error {
 				result = 0
 			}
 		}
+	} else {
+		avgOld = 0
+		stdOld = 0
 	}
 	if err = app.PutData(key, avgNew, stdNew, numNew); err != nil {
 		return err
 	}
 	stat.Anoma = result
+	stat.AvgOld = avgOld
+	stat.AvgNew = avgNew
 	return nil
 }
 
