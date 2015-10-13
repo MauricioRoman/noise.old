@@ -15,7 +15,7 @@ Sub:
 
 ```js
 var noise = require('noise-client').Noise({port: 9000});
-noise.sub(function(name, stamp, value, anoma) {...});
+noise.sub(function(name, stamp, value, anoma, avgOld, avgNew) {...});
 ```
 
 Pub:
