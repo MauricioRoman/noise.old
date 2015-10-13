@@ -67,7 +67,7 @@ func (noise *Noise) Pub(name string, stamp int, value float64) (err error) {
 }
 
 // Subscribe anomalies from noise.
-func (noise *Noise) Sub(onAnomaly func(string, int, float64, float64)) (err error) {
+func (noise *Noise) Sub(onAnomaly func(string, int, float64, float64, float64, float64)) (err error) {
 	if noise.isPub {
 		panic("Cannot sub in pub mode")
 	}
@@ -85,17 +85,20 @@ func (noise *Noise) Sub(onAnomaly func(string, int, float64, float64)) (err erro
 	var stamp int
 	var value float64
 	var anoma float64
+	var avgOld float64
+	var avgNew float64
 	scanner := bufio.NewScanner(noise.conn)
 	for scanner.Scan() {
 		if err := scanner.Err(); err != nil {
 			return err
 		}
 		s := scanner.Text()
-		n, err := fmt.Sscanf(s, "%s %d %f %f", &name, &stamp, &value, &anoma)
-		if err != nil || n != 4 {
+		n, err := fmt.Sscanf(s, "%s %d %f %f %f %f ", &name, &stamp, &value,
+			&anoma, &avgOld, &avgNew)
+		if err != nil || n != 6 {
 			return err
 		}
-		onAnomaly(name, stamp, value, anoma)
+		onAnomaly(name, stamp, value, anoma, avgOld, avgNew)
 	}
 	return
 }

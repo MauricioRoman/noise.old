@@ -21,8 +21,8 @@ import (
 
 func main() {
     client := noise.NewNoiseClient("0.0.0.0", 9000)
-    client.Sub(func(name string, stamp int, value float64, anoma float64) {
-        fmt.Printf("%s %d %.3f %.3f\n", name, stamp, value, anoma)
+    client.Sub(func(name string, stamp int, value float64, anoma float64, avgOld float64, avgNew float64) {
+        fmt.Printf("%s %d %.3f %.3f %.3f %.3f\n", name, stamp, value, anoma, avgOld, avgNew)
     })
 }
 ```
