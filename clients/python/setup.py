@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name="noise.py",
-    version="0.0.3",
+    version="0.0.4",
     author="hit9",
     author_email="hit9@ele.me",
     description="Python client for github.com/eleme/noise",

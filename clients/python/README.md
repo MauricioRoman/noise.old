@@ -27,7 +27,7 @@ noise = Noise(host="0.0.0.0", port=9000)
 To subscribe anomalies:
 
 ```python
-def on_anomaly(name, stamp, value, anoma):
+def on_anomaly(name, stamp, value, anoma, avg_old, avg_new):
     pass
 noise.sub(on_anomaly)
 ```

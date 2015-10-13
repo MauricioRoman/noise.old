@@ -21,7 +21,7 @@ sub usage::
 
 pub usage::
 
-    noise.pub(name, stamp, value)
+    noise.pub(name, stamp, value, avg_old, avg_new)
 
 Note that meth:`noise.sub` will block the thread via `select`.
 """
@@ -84,11 +84,11 @@ class Noise(object):
                 for line in lines:
                     args = line.split()
                     on_anomaly(args[0], int(args[1]), float(args[2]),
-                               float(args[3]))
+                               float(args[3]), float(args[4]), float(args[5]))
 
 
 if __name__ == '__main__':
-    def on_anomaly(name, stamp, value, anoma):
-        print name, stamp, value, anoma
+    def on_anomaly(name, stamp, value, anoma, avg_old, avg_new):
+        print name, stamp, value, anoma, avg_old, avg_new
     noise = Noise()
     noise.sub(on_anomaly)
