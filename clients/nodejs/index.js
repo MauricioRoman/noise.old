@@ -39,7 +39,7 @@ Noise.prototype.doPub = function(name, stamp, value, cb) {
 Noise.prototype.sub = function(cb) {
   var self = this;
   if (!this.sock) {
-    this.connect(function() {
+    return this.connect(function() {
       return self.sock.write("sub\n", function() {
         return self.doSub(cb);
       });
@@ -62,7 +62,7 @@ Noise.prototype.doSub = function(cb) {
     }
     for (var i = 0; i < lines.length; i++) {
       var item = lines[i].split(/\s+/);
-      cb(item[0], +item[1], +item[2], +item[3]);
+      cb(item[0], +item[1], +item[2], +item[3], +item[4], +item[5]);
     }
   });
 };
@@ -73,8 +73,8 @@ if (require.main === module) {
 
 function main() {
   noise = new Noise();
-  noise.sub(function(name, stamp, value, anoma) {
-    console.log(name, stamp, value, anoma);
+  noise.sub(function(name, stamp, value, anoma, avgOld, avgNew) {
+    console.log(name, stamp, value, anoma, avgOld, avgNew);
   });
 }
 
