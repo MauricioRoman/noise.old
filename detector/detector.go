@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/eleme/noise/config"
+	"github.com/fatih/color"
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
@@ -110,10 +111,14 @@ func (detector *Detector) HandlePub(conn net.Conn, scanner *bufio.Scanner) {
 			continue
 		}
 		elapsed := time.Since(startAt)
-		ms := float64(elapsed.Nanoseconds()) / float64(1000*1000)
-		log.Printf("%.2fms %s", ms, stat.String())
-		for _, out := range detector.outs {
-			if math.Abs(stat.Anoma) >= 1.0 {
+		microseconds := elapsed.Nanoseconds() / 1000
+		msg := fmt.Sprintf("%dμs %s", microseconds, stat.String())
+		if math.Abs(stat.Anoma) >= 1.0 {
+			msg = color.RedString(msg)
+		}
+		log.Println(msg)
+		if math.Abs(stat.Anoma) >= 1.0 {
+			for _, out := range detector.outs {
 				out <- stat
 			}
 		}
@@ -171,7 +176,7 @@ func (detector *Detector) Detect(stat *Stat) error {
 			result = 0
 		} else {
 			numNew = numOld
-			result = (v - avgNew) / (3 * stdNew)
+			result = (v - avgNew) / float64(3*stdNew)
 			if math.IsNaN(result) {
 				result = 0
 			}
@@ -199,7 +204,7 @@ func (detector *Detector) GetDBKey(stat *Stat) string {
 
 func (detector *Detector) GetDBData(key string) (avg float64, std float64, num int, err error) {
 	data, err := detector.db.Get([]byte(key), nil)
-	if err != leveldb.ErrNotFound || data == nil {
+	if err == leveldb.ErrNotFound || data == nil {
 		err = ErrDBKeyNotFound
 		return
 	}
