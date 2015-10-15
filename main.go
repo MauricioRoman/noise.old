@@ -15,7 +15,7 @@ func main() {
 	// webapp := flag.Bool("webapp", false, "start webapp")
 	// alerter := flag.Bool("alerter", false, "start alerter")
 	fileName := flag.String("config", "", "config path")
-	version := flag.Bool("verion", false, "show version")
+	version := flag.Bool("version", false, "show version")
 	flag.Parse()
 	if flag.NFlag() != 2 {
 		flag.PrintDefaults()
