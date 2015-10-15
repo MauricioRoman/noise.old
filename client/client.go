@@ -1,5 +1,4 @@
-// Go client implemention for github.com/eleme/noise.
-package noise
+package client
 
 import (
 	"bufio"
@@ -8,11 +7,11 @@ import (
 )
 
 type Noise struct {
-	Host  string   // noise server host, default: '0.0.0.0'
-	Port  int      // noise server port, default: 9000
-	conn  net.Conn // connection to remote server
-	isPub bool     // is in pub mode?
-	isSub bool     // is in sub mode?
+	Host  string
+	Port  int
+	conn  net.Conn
+	isPub bool
+	isSub bool
 }
 
 // Create noise client with default values.
