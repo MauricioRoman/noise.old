@@ -7,7 +7,7 @@
     "periodicity": [480, 180],
     "start size": 32,
     "whitelist": ["*"],
-    "blacklist": ["*.statsd"]
+    "blacklist": ["statsd.*"]
   },
   "webapp": {
     "port": 9001,
