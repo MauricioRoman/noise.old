@@ -9,7 +9,7 @@
     "whitelist": ["*"],
     "blacklist": ["*.statsd"]
   },
-  "web": {
+  "webapp": {
     "port": 9001,
     "auth": "admin:admin",
     "dbfile": "rules.db"
