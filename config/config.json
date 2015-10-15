@@ -1,7 +1,6 @@
 {
   "detector": {
-    "in port": 9001,
-    "out port": 9002,
+    "Port": 9000,
     "dbfile": "stats.db",
     "factor": 0.07,
     "strict": true,
@@ -11,7 +10,7 @@
     "blacklist": ["*.statsd"]
   },
   "web": {
-    "port": 9003,
+    "port": 9001,
     "auth": "admin:admin",
     "dbfile": "rules.db"
   },
