@@ -11,7 +11,7 @@ import (
 
 type Config struct {
 	Detector *SectionDetector `json:"detector"`
-	Web      *SectionWeb      `json:"web"`
+	WebApp   *SectionWebApp   `json:"webapp"`
 	Alerter  *SectionAlerter  `json:"alerter"`
 }
 
@@ -26,7 +26,7 @@ type SectionDetector struct {
 	BlackList   []string `json:"blacklist"`
 }
 
-type SectionWeb struct {
+type SectionWebApp struct {
 	Port   int    `json:"port"`
 	Auth   string `json:"auth"`
 	DBFile string `json:"dbfile"`
@@ -40,7 +40,7 @@ type SectionAlerter struct {
 func NewWithDefaults() *Config {
 	cfg := new(Config)
 	cfg.Detector = new(SectionDetector)
-	cfg.Web = new(SectionWeb)
+	cfg.WebApp = new(SectionWebApp)
 	cfg.Alerter = new(SectionAlerter)
 	cfg.Detector.Port = 9000
 	cfg.Detector.DBFile = "stats.db"
@@ -50,11 +50,11 @@ func NewWithDefaults() *Config {
 	cfg.Detector.StartSize = 32
 	cfg.Detector.WhiteList = []string{"*"}
 	cfg.Detector.BlackList = []string{"statsd.*"}
-	cfg.Web.Port = 9001
-	cfg.Web.Auth = "admin:admin"
-	cfg.Web.DBFile = "rules.db"
+	cfg.WebApp.Port = 9001
+	cfg.WebApp.Auth = "admin:admin"
+	cfg.WebApp.DBFile = "rules.db"
 	cfg.Alerter.Command = ""
-	cfg.Alerter.DBFile = cfg.Web.DBFile
+	cfg.Alerter.DBFile = cfg.WebApp.DBFile
 	return cfg
 }
 
@@ -83,7 +83,7 @@ func Validate(cfg *Config) error {
 	if cfg.Detector.Factor >= 1.0 || cfg.Detector.Factor <= 0 {
 		return ErrDetectorFactor
 	}
-	if len(cfg.Web.Auth) > 0 && len(strings.Split(cfg.Web.Auth, ":")) != 2 {
+	if len(cfg.WebApp.Auth) > 0 && len(strings.Split(cfg.WebApp.Auth, ":")) != 2 {
 		return ErrWebAuth
 	}
 	return nil
