@@ -22,11 +22,11 @@ func NewStatWithDefaults() *Stat {
 	return stat
 }
 
-func NewStatWithString(s string) (*Stat, error) {
+func NewStatWithInputString(s string) (*Stat, error) {
 	stat := NewStatWithDefaults()
 	words := strings.Fields(s)
 	if len(words) != 3 {
-		return nil, ErrInvalidStatInput
+		return nil, ErrStatInputString
 	}
 	name := words[0]
 	stamp, err := strconv.Atoi(words[1])
@@ -43,7 +43,47 @@ func NewStatWithString(s string) (*Stat, error) {
 	return stat, nil
 }
 
-func (stat *Stat) String() string {
+func NewStatWithOutputString(s string) (*Stat, error) {
+	stat := NewStatWithDefaults()
+	words := strings.Fields(s)
+	if len(words) != 6 {
+		return nil, ErrStatOutputString
+	}
+	name := words[0]
+	stamp, err := strconv.Atoi(words[1])
+	if err != nil {
+		return nil, err
+	}
+	value, err := strconv.ParseFloat(words[2], 64)
+	if err != nil {
+		return nil, err
+	}
+	anoma, err := strconv.ParseFloat(words[3], 64)
+	if err != nil {
+		return nil, err
+	}
+	avgOld, err := strconv.ParseFloat(words[4], 64)
+	if err != nil {
+		return nil, err
+	}
+	avgNew, err := strconv.ParseFloat(words[5], 64)
+	if err != nil {
+		return nil, err
+	}
+	stat.Name = name
+	stat.Stamp = stamp
+	stat.Value = value
+	stat.Anoma = anoma
+	stat.AvgOld = avgOld
+	stat.AvgNew = avgNew
+	return stat
+}
+
+func (stat *Stat) InputString() string {
+	return fmt.Sprintf("%s %d %.5f", stat.Name, stat.Stamp, stat.Value)
+}
+
+func (stat *Stat) OutputString() string {
 	return fmt.Sprintf("%s %d %.3f %.3f %.3f %.3f",
 		stat.Name, stat.Stamp, stat.Value, stat.Anoma, stat.AvgOld, stat.AvgNew)
 }
