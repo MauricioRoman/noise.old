@@ -96,7 +96,7 @@ func (detector *Detector) HandlePub(conn net.Conn, scanner *bufio.Scanner) {
 			break
 		}
 		s := scanner.Text()
-		stat, err := NewStatWithString(s)
+		stat, err := NewStatWithInputString(s)
 		if err != nil {
 			log.Printf("invalid stat input: %s, skipping..", s)
 			continue
