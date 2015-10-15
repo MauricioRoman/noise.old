@@ -14,8 +14,7 @@ type Noise struct {
 	isSub bool
 }
 
-// Create noise client with default values.
-func NewNoiseClientWithDefaults() *Noise {
+func NewWithDefaults() *Noise {
 	noise := new(Noise)
 	noise.Host = "0.0.0.0"
 	noise.Port = 9000
@@ -25,27 +24,23 @@ func NewNoiseClientWithDefaults() *Noise {
 	return noise
 }
 
-// Create noise client with host and port as arguments.
-func NewNoiseClient(host string, port int) *Noise {
-	noise := NewNoiseClientWithDefaults()
+func New(host string, port int) *Noise {
+	noise := NewWithDefaults()
 	noise.Host = host
 	noise.Port = port
 	return noise
 }
 
-// Connect to noise server.
 func (noise *Noise) Connect() (err error) {
 	addr := fmt.Sprintf("%s:%d", noise.Host, noise.Port)
 	noise.conn, err = net.Dial("tcp", addr)
 	return
 }
 
-// Close the connection.
 func (noise *Noise) Close() (err error) {
 	return noise.conn.Close()
 }
 
-// Publish stats to noise.
 func (noise *Noise) Pub(name string, stamp int, value float64) (err error) {
 	if noise.isSub {
 		panic("Cannot pub in sub mode")
@@ -65,7 +60,6 @@ func (noise *Noise) Pub(name string, stamp int, value float64) (err error) {
 	return
 }
 
-// Subscribe anomalies from noise.
 func (noise *Noise) Sub(onAnomaly func(string, int, float64, float64, float64, float64)) (err error) {
 	if noise.isPub {
 		panic("Cannot sub in pub mode")
