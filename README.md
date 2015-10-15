@@ -122,8 +122,9 @@ compution is simple, fast.
 Configurations
 --------------
 
+* **debug** debug mode, default: `false`
 * **port** tcp port to bind, default: `9000`
-* **dbpath** leveldb database directory path, default: `noise.db`
+* **dbfile** leveldb database directory path, default: `stats.db`
 * **factor** the ewma factor (0~1), the `factor` larger the timeliness better, default: `0.07`
 * **strict** if set false, noise will use `(avg+x)/2` as new `x`, default: `true`
 * **periodicity** its format is `[grid, numGrids]` and we suppose that `grod*numGrids` is
