@@ -1,7 +1,0 @@
-{
-  "port": 9000,
-  "dbpath": "noise.db",
-  "factor": 0.07,
-  "strict": true,
-  "periodicity": [480, 180]
-}
