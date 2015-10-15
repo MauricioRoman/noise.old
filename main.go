@@ -17,12 +17,12 @@ func main() {
 	fileName := flag.String("config", "", "config path")
 	version := flag.Bool("version", false, "show version")
 	flag.Parse()
-	if flag.NFlag() != 2 {
-		flag.PrintDefaults()
-		os.Exit(1)
-	}
 	if *version {
 		fmt.Fprintln(os.Stderr, VERSION)
+		os.Exit(1)
+	}
+	if flag.NFlag() != 2 {
+		flag.PrintDefaults()
 		os.Exit(1)
 	}
 	cfg, err := config.NewWithJsonFile(*fileName)
