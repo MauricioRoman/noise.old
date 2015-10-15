@@ -2,3 +2,4 @@
 noise
 *.db
 node_modules
+test-config.json
