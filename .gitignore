@@ -1,6 +1,4 @@
 .*.sw[opn]
 noise
-noise.db
+*.db
 node_modules
-!noise/
-test-config.json
