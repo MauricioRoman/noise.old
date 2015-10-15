@@ -16,6 +16,7 @@ type Config struct {
 }
 
 type SectionDetector struct {
+	Debug       bool     `json:"debug"`
 	Port        int      `json:"port"`
 	DBFile      string   `json:"dbfile"`
 	Factor      float64  `json:"factor"`
@@ -42,6 +43,7 @@ func NewWithDefaults() *Config {
 	cfg.Detector = new(SectionDetector)
 	cfg.WebApp = new(SectionWebApp)
 	cfg.Alerter = new(SectionAlerter)
+	cfg.Detector.Debug = false
 	cfg.Detector.Port = 9000
 	cfg.Detector.DBFile = "stats.db"
 	cfg.Detector.Factor = 0.07

@@ -113,11 +113,16 @@ func (detector *Detector) HandlePub(conn net.Conn, scanner *bufio.Scanner) {
 		elapsed := time.Since(startAt)
 		microseconds := elapsed.Nanoseconds() / 1000
 		msg := fmt.Sprintf("%dμs %s", microseconds, stat.OutputString())
-		if math.Abs(stat.Anoma) >= 1.0 {
-			msg = color.RedString(msg)
+		anomalous := math.Abs(stat.Anoma) >= 1.0
+		if detector.cfg.Debug {
+			if anomalous {
+				msg = color.RedString(msg)
+			}
+			log.Println(msg)
+		} else if anomalous {
+			log.Println(msg)
 		}
-		log.Println(msg)
-		if math.Abs(stat.Anoma) >= 1.0 {
+		if anomalous {
 			for _, out := range detector.outs {
 				out <- stat
 			}

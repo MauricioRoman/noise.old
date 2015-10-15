@@ -1,6 +1,7 @@
 {
   "detector": {
-    "Port": 9000,
+    "debug": false,
+    "port": 9000,
     "dbfile": "stats.db",
     "factor": 0.07,
     "strict": true,
