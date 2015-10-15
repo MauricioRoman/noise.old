@@ -43,7 +43,7 @@ Installation
 Command Line Usage
 ------------------
 
-    $ ./noise -c ./config.json
+    $ ./noise -detector -config ./config.json 
     2015/09/29 17:36:23 reading config from ./config.json..
     2015/09/29 17:36:23 listening on 0.0.0.0:9000..
 
@@ -78,16 +78,6 @@ Install `noise-statsd` via npm and add it to statsd's backends list in config:
     {
     , backends: ['noise-statsd']
     }
-
-Client Implementations
-----------------------
-
-- [Go](clients/go) by @hit9
-- [Nodejs](clients/nodejs) by @hit9
-- [Python](clients/python) by @hit9
-- [Statsd](clients/statsd) by @hit9
-
-Welcome for pull requests, thanks!
 
 Detection Algorithm
 -------------------
