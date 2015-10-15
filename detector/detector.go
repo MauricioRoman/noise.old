@@ -79,7 +79,7 @@ func (detector *Detector) HandleSub(conn net.Conn) {
 	defer delete(detector.outs, &conn)
 	for {
 		stat := <-detector.outs[&conn]
-		bytes := []byte(stat.String())
+		bytes := []byte(stat.OutputString())
 		bytes = append(bytes, '\n')
 		_, err := conn.Write(bytes)
 		if err != nil {
@@ -112,7 +112,7 @@ func (detector *Detector) HandlePub(conn net.Conn, scanner *bufio.Scanner) {
 		}
 		elapsed := time.Since(startAt)
 		microseconds := elapsed.Nanoseconds() / 1000
-		msg := fmt.Sprintf("%dμs %s", microseconds, stat.String())
+		msg := fmt.Sprintf("%dμs %s", microseconds, stat.OutputString())
 		if math.Abs(stat.Anoma) >= 1.0 {
 			msg = color.RedString(msg)
 		}

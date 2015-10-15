@@ -76,7 +76,7 @@ func NewStatWithOutputString(s string) (*Stat, error) {
 	stat.Anoma = anoma
 	stat.AvgOld = avgOld
 	stat.AvgNew = avgNew
-	return stat
+	return stat, nil
 }
 
 func (stat *Stat) InputString() string {
