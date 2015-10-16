@@ -1,6 +1,8 @@
 Noise
 =====
 
+Note: Not Production Ready.
+
 Noise is a simple daemon to detect anomalous stats, via the well-known
 [3-sigma rule (68-95-99.7 rule)](https://en.wikipedia.org/wiki/68%E2%80%9395%E2%80%9399.7_rule)
 and [exponential weighted moving average (ewma)](https://en.wikipedia.org/wiki/Moving_average).
@@ -142,4 +144,4 @@ name timestamp value anoma '\n'
 License
 --------
 
-MIT. (c) 2015 Chao Wang, Eleme, Inc. <hit9@ele.me>
+MIT. (c) 2015 Chao Wang, Eleme, Inc. <hit9@icloud.com>

@@ -1,4 +1,4 @@
-// Copyright (c) 2015, Chao Wang <hit9@ele.me>
+// Copyright (c) 2015, Chao Wang <hit9@icloud.com>
 
 package config
 
